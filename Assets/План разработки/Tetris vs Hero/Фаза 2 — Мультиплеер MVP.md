@@ -86,7 +86,7 @@ Edit → Project Settings → Services → Create / Link project
 + NetworkVariable<Vector2Int> _netPiecePos      = new(...);
 + NetworkVariable<int>        _netPieceRotation = new(...);
 + NetworkVariable<int>        _netPieceType     = new(...);
-+ NetworkVariable<bool>       _netPieceIsWeak   = new(...);
++ NetworkVariable<int>        _netPieceHP       = new(...);
 
   private void Update()
   {
@@ -99,7 +99,7 @@ Edit → Project Settings → Services → Create / Link project
 +     _netPiecePos.Value      = Current.Pos;
 +     _netPieceRotation.Value = Current.Rotation;
 +     _netPieceType.Value     = Current.Type;
-+     _netPieceIsWeak.Value   = Current.IsWeak;
++     _netPieceHP.Value       = Current.HP;
 + }
 ```
 
