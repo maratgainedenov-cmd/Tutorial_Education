@@ -102,7 +102,18 @@ public class BoardRenderer : MonoBehaviour
         int colorIndex = (data.PieceType - 1) % TetrominoData.Colors.Length;
         Color c = TetrominoData.Colors[colorIndex];
 
-        if (data.IsWeak) c = Color.Lerp(c, Color.white, 0.4f);
+        if (data.IsWeak)
+        {
+            c = Color.Lerp(c, Color.white, 0.4f);
+
+            // Затемнение пропорционально полученному урону
+            if (data.MaxHP > 0 && data.HP < data.MaxHP)
+            {
+                float damageFraction = 1f - (float)data.HP / data.MaxHP;
+                c = Color.Lerp(c, Color.black, damageFraction * 0.5f);
+            }
+        }
+
         sr.color = c;
     }
 }

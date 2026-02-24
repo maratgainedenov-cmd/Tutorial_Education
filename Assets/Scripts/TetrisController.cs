@@ -164,6 +164,20 @@ public class TetrisController : MonoBehaviour
         }
     }
 
+    // ─── Вспомогательные ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Проверить, занята ли ячейка активной (ещё не зафиксированной) фигурой.
+    /// Используется в TetrisBoard.ExtraOccupied для коллизий персонажа.
+    /// </summary>
+    public bool IsActivePieceCell(int x, int y)
+    {
+        if (Current == null) return false;
+        foreach (var cell in Current.GetCells())
+            if (cell.x == x && cell.y == y) return true;
+        return false;
+    }
+
     // ─── Управление состоянием (GameManager) ─────────────────────────────────
 
     public void Pause()      { CurrentState = State.Paused;   OnStateChanged?.Invoke(); }

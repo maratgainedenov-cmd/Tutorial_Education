@@ -39,19 +39,56 @@ public class GameManager : MonoBehaviour
         _gameUI.Init(_victory);
 
         // Подписки
-        _tetrisController.OnStateChanged  += OnTetrisStateChanged;
-        _victory.OnCharacterWin           += OnCharacterWin;
-        _victory.OnTetrisWin              += OnTetrisWin;
+        _tetrisController.OnStateChanged      += OnTetrisStateChanged;
+        _victory.OnCharacterWin               += OnCharacterWin;
+        _victory.OnTetrisWin                  += OnTetrisWin;
         _tetrisController.Board.OnPiecePlaced += CheckCrush;
+
+        // Персонаж не проходит сквозь активную (ещё падающую) фигуру
+        _tetrisController.Board.ExtraOccupied =
+            (x, y) => _tetrisController.IsActivePieceCell(x, y);
+    }
+
+    // ─── Update ───────────────────────────────────────────────────────────────
+
+    private void Update()
+    {
+        if (_gameEnded) return;
+        CheckActivePieceCrush();
     }
 
     // ─── Обработчики событий ──────────────────────────────────────────────────
 
-    /// <summary>Когда доска заполнена (GameOver), Тетрис проиграл — он не смог задавить.</summary>
+    /// <summary>
+    /// Доска переполнена — новую фигуру негде заспавнить.
+    /// Фоллбэк: если CheckCrush не поймал crush раньше, фиксируем победу Тетриса.
+    /// </summary>
     private void OnTetrisStateChanged()
     {
         if (_tetrisController.CurrentState == TetrisController.State.GameOver)
             TriggerTetrisWin();
+    }
+
+    /// <summary>
+    /// Проверить crush: активная фигура занимает ячейку персонажа прямо сейчас.
+    /// Вызывается каждый кадр из Update.
+    /// </summary>
+    private void CheckActivePieceCrush()
+    {
+        ActivePiece piece = _tetrisController.Current;
+        if (piece == null) return;
+
+        _tetrisController.Board.Grid.WorldToCell(
+            _character.transform.position, out int cx, out int cy);
+
+        foreach (var cell in piece.GetCells())
+        {
+            if (cell.x == cx && (cell.y == cy || cell.y == cy + 1))
+            {
+                TriggerTetrisWin();
+                return;
+            }
+        }
     }
 
     /// <summary>

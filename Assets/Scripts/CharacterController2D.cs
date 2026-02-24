@@ -50,6 +50,9 @@ public class CharacterController2D : MonoBehaviour
     /// <summary>Удар по ячейке: x, y, направление (-1/+1).</summary>
     public event Action<int, int, int> OnAttack;
 
+    /// <summary>Вызвать анимацию удара по сильному блоку (вызывается из BlockInteraction).</summary>
+    public void PlayHitStrong() => _view.PlayHitStrong();
+
     // ─── Private ──────────────────────────────────────────────────────────────
 
     private TetrisBoard   _board;

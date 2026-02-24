@@ -27,20 +27,32 @@ public class BlockInteraction : MonoBehaviour
     /// <summary>
     /// Персонаж ударил в направлении dir.
     /// Проверяем ячейки (x, y) и (x, y+1) — персонаж занимает ~2 клетки в высоту.
+    /// Если попал по сильному блоку — вызывает анимацию отдачи.
     /// </summary>
     private void HandleAttack(int x, int y, int dir)
     {
+        bool hitStrong = false;
+
         for (int dy = 0; dy <= 1; dy++)
         {
             if (!_board.Grid.IsValid(x, y + dy)) continue;
 
             CellData cell = _board.Grid.GetValue(x, y + dy);
-            if (cell.IsEmpty || !cell.IsWeak) continue;
+            if (cell.IsEmpty) continue;
+
+            if (!cell.IsWeak)
+            {
+                hitStrong = true;
+                continue;
+            }
 
             bool destroyed = _board.DamageCell(x, y + dy);
             if (destroyed)
                 _victory.AddDestroyedBlocks(1);
         }
+
+        if (hitStrong)
+            _character.PlayHitStrong();
     }
 
     /// <summary>

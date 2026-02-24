@@ -16,6 +16,7 @@ public class CharacterView : MonoBehaviour
     private static readonly int HashWallSlide = Animator.StringToHash("WallSlide");
     private static readonly int HashJump      = Animator.StringToHash("Jump");
     private static readonly int HashAttack    = Animator.StringToHash("Attack");
+    private static readonly int HashHitStrong = Animator.StringToHash("HitStrong");
 
     private void Awake()
     {
@@ -47,6 +48,12 @@ public class CharacterView : MonoBehaviour
     public void PlayAttack()
     {
         _animator?.SetTrigger(HashAttack);
+    }
+
+    /// <summary>Удар пришёлся по сильному блоку — анимация отдачи.</summary>
+    public void PlayHitStrong()
+    {
+        _animator?.SetTrigger(HashHitStrong);
     }
 
     public void SetPosition(Vector3 worldPos)

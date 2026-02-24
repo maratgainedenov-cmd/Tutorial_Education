@@ -102,8 +102,18 @@ public class TetrisBoard
 
     // ─── Утилиты ──────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Дополнительная проверка занятости ячейки (например, активная фигура).
+    /// Задаётся из GameManager после инициализации.
+    /// </summary>
+    public System.Func<int, int, bool> ExtraOccupied { get; set; }
+
     public bool IsCellOccupied(int x, int y)
-        => Grid.IsValid(x, y) && !Grid.GetValue(x, y).IsEmpty;
+    {
+        if (!Grid.IsValid(x, y)) return false;
+        if (!Grid.GetValue(x, y).IsEmpty) return true;
+        return ExtraOccupied?.Invoke(x, y) ?? false;
+    }
 
     // ─── Private ──────────────────────────────────────────────────────────────
 
