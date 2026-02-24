@@ -18,7 +18,7 @@ int ClearLines()
 // Очистить заполненные линии → кол-во очищенных → OnLinesCleared(count)
 
 bool DamageCell(int x, int y, int damage = 1)
-// Урон слабому блоку → true если разрушен (HP ≤ 0)
+// Урон любому непустому блоку → HP--; true если разрушен (HP ≤ 0)
 
 bool IsCellOccupied(int x, int y)
 // Проверить зафиксированную ячейку (активная фигура НЕ учитывается!)
@@ -35,6 +35,9 @@ event Action      OnPiecePlaced    // после фиксации фигуры
 
 `IsCellOccupied` видит только **зафиксированные** блоки.
 Активная падающая фигура (`TetrisController.Current`) — не в гриде.
+
+`PlacePiece` записывает каждую ячейку как `CellData.Block(type, piece.HP)` —
+HP берётся из `ActivePiece`, который получает его при спавне (`_blockHP = 3`).
 
 ---
 
