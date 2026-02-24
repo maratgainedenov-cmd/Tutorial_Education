@@ -11,10 +11,14 @@
             "id": "0b3de0b31575cd57",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Граф"
+              "type": "markdown",
+              "state": {
+                "file": "Tetris vs Hero/Роадмап.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Роадмап"
             }
           }
         ]
@@ -179,27 +183,32 @@
   },
   "active": "0b3de0b31575cd57",
   "lastOpenFiles": [
+    "Tetris vs Hero/Взаимодействия блоков и персонажа.md.tmp.25772.1771931607154",
+    "Tetris vs Hero.md",
+    "Tetris vs Hero/Мультиплеер — Архитектура MVP.md",
+    "Tetris vs Hero/Роадмап.md.tmp.25772.1771928088874",
+    "Tetris vs Hero/Роадмап.md.tmp.25772.1771928084680",
+    "Tetris vs Hero/Роадмап.md.tmp.25772.1771928080805",
+    "Tetris vs Hero/TetrisBoard — API.md.tmp.25772.1771927602441",
+    "Tetris vs Hero/TetrisBoard — API.md.tmp.25772.1771927594800",
+    "Tetris vs Hero/VictoryModel.md",
+    "Tetris vs Hero/Типы блоков.md",
+    "Tetris vs Hero/Архитектура MVC.md.tmp.25772.1771927079176",
+    "Tetris vs Hero/Архитектура MVC.md.tmp.25772.1771927073841",
+    "Tetris vs Hero/Архитектура MVC.md.tmp.25772.1771927069820",
+    "Tetris vs Hero/Архитектура MVC.md.tmp.25772.1771927063960",
+    "Tetris vs Hero/Концепция.md",
     "Tetris vs Hero/Роадмап.md.tmp.25772.1771923904876",
-    "Tetris vs Hero/Взаимодействия блоков и персонажа.md.tmp.25772.1771923884042",
     "Tetris vs Hero/Архитектура MVC.md",
     "Tetris vs Hero/Персонаж — Физика.md",
-    "Tetris vs Hero.md",
     "Tetris vs Hero/TetrisBoard — API.md",
     "Tetris vs Hero/Фаза 1 — Single Player.md",
-    "Tetris vs Hero/Мультиплеер — Архитектура MVP.md",
     "Tetris vs Hero/Фаза 3 — Полировка.md",
     "Tetris vs Hero/Фаза 2 — Мультиплеер MVP.md",
-    "Tetris vs Hero/Фаза 2 — Мультиплеер MVP.md.tmp.14192.1771891617986",
-    "Tetris vs Hero/Фаза 1 — Single Player.md.tmp.14192.1771891559369",
     "Tetris vs Hero/Роадмап.md",
-    "Tetris vs Hero/VictoryModel.md",
     "Tetris vs Hero/Статус реализации.md",
     "Tetris vs Hero/Взаимодействия блоков и персонажа.md",
     "Tetris vs Hero/Управление.md",
-    "Tetris vs Hero/Персонаж — Физика.md.tmp.14192.1771889672950",
-    "Tetris vs Hero/Типы блоков.md",
-    "Tetris vs Hero/Концепция.md",
-    "Tetris vs Hero",
     "Добро пожаловать.md"
   ]
 }
