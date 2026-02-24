@@ -11,9 +11,9 @@
 
 | Файл | Назначение |
 |------|-----------|
-| `CellData.cs` | `struct`: PieceType, IsWeak, HP, MaxHP |
+| `CellData.cs` | `struct`: PieceType, HP, MaxHP (все блоки одинаковые, HP=3) |
 | `TetrominoData.cs` | Статические формы и цвета 7 фигур |
-| `ActivePiece.cs` | Текущая падающая фигура (позиция, поворот) |
+| `ActivePiece.cs` | Текущая падающая фигура (позиция, поворот, HP) |
 | `TetrisBoard.cs` | `Grid2D<CellData>` — коллизии, очистка линий, урон блокам |
 | `VictoryModel.cs` | Счётчик разбитых блоков, условия победы |
 
@@ -25,7 +25,7 @@
 
 | Файл | Назначение |
 |------|-----------|
-| `BoardRenderer.cs` | Пул SpriteRenderer'ов, рендер ячеек и ghost |
+| `BoardRenderer.cs` | Пул SpriteRenderer'ов, рендер ячеек и ghost; затемнение по HP |
 | `CharacterView.cs` | Flip спрайта, анимации (опционально) |
 | `GameUI.cs` | TextMeshPro счётчики, экран GameOver |
 
@@ -37,9 +37,9 @@
 
 | Файл | Назначение |
 |------|-----------|
-| `TetrisController.cs` | Ввод тетриса, автопадение, спавн, state machine |
+| `TetrisController.cs` | Ввод тетриса, автопадение, спавн (`_blockHP = 3`), state machine |
 | `CharacterController2D.cs` | Celeste-физика: прыжок, wall-jump, AABB-коллизии |
-| `BlockInteraction.cs` | Удар персонажа → DamageCell → VictoryModel |
+| `BlockInteraction.cs` | Каждый удар: DamageCell + толчок; HP=0 → очко персонажу |
 | `GameManager.cs` | Связывает все системы, crush detection |
 
 ---
@@ -85,6 +85,7 @@ GameManager.Awake()
 > - [[TetrisBoard — API]] — методы и события доски
 > - [[VictoryModel]] — счётчик, события победы
 > - [[Взаимодействия блоков и персонажа]] — удар, crush, HP-визуал
+> - [[Типы блоков]] — HP=3, затемнение, механика 3 ударов
 
 ---
 
