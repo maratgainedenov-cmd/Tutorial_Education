@@ -1,44 +1,20 @@
 {
   "main": {
-    "id": "d8dc0c3f414242b0",
+    "id": "8d629f36588dc6dc",
     "type": "split",
     "children": [
       {
-        "id": "56513286605a2c3b",
+        "id": "c93708d9eefaae6f",
         "type": "tabs",
         "children": [
           {
-            "id": "0b3de0b31575cd57",
+            "id": "d96733d0918f58a0",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Tetris vs Hero/Персонаж — Физика.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Персонаж — Физика"
-            }
-          }
-        ]
-      },
-      {
-        "id": "031e2952e3957d1b",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "9fab39da23fdb77c",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Tetris vs Hero/TetrisBoard — API.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "TetrisBoard — API"
+              "title": "New tab"
             }
           }
         ]
@@ -47,15 +23,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "9012a57dcae7c2f7",
+    "id": "346c96f5e1aa8158",
     "type": "split",
     "children": [
       {
-        "id": "c236488c894868be",
+        "id": "987aeb25c6390a04",
         "type": "tabs",
         "children": [
           {
-            "id": "7639ec356bf5fe93",
+            "id": "211af02beddee212",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -68,7 +44,7 @@
             }
           },
           {
-            "id": "56bb545e76392b70",
+            "id": "73967550ae41ad9c",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -81,17 +57,17 @@
                 "sortOrder": "alphabetical"
               },
               "icon": "lucide-search",
-              "title": "Поиск"
+              "title": "Search"
             }
           },
           {
-            "id": "da145a5de3dbf9b3",
+            "id": "e013bc42b2079fac",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
               "state": {},
               "icon": "lucide-bookmark",
-              "title": "Закладки"
+              "title": "Bookmarks"
             }
           }
         ]
@@ -101,15 +77,15 @@
     "width": 300
   },
   "right": {
-    "id": "790c8bda8cf91a24",
+    "id": "2892503f8aa37449",
     "type": "split",
     "children": [
       {
-        "id": "0492b0fc90e21dd7",
+        "id": "526d46a155dff855",
         "type": "tabs",
         "children": [
           {
-            "id": "f458d25dc8343ee9",
+            "id": "451ea29fb802c11c",
             "type": "leaf",
             "state": {
               "type": "backlink",
@@ -123,11 +99,11 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Обратные ссылки"
+              "title": "Backlinks"
             }
           },
           {
-            "id": "5c98e551bb61eae6",
+            "id": "671461238faf339b",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
@@ -136,11 +112,11 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Исходящие ссылки"
+              "title": "Outgoing links"
             }
           },
           {
-            "id": "26a2675a50b07aee",
+            "id": "2b4f354fc53eb7d2",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -151,11 +127,11 @@
                 "searchQuery": ""
               },
               "icon": "lucide-tags",
-              "title": "Теги"
+              "title": "Tags"
             }
           },
           {
-            "id": "09436fdf63446d59",
+            "id": "3f43e76bd7787a6f",
             "type": "leaf",
             "state": {
               "type": "all-properties",
@@ -165,22 +141,21 @@
                 "searchQuery": ""
               },
               "icon": "lucide-archive",
-              "title": "Все свойства"
+              "title": "All properties"
             }
           },
           {
-            "id": "39107ce7b8c27864",
+            "id": "5de3c0e04802099e",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "Добро пожаловать.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Структура Добро пожаловать"
+              "title": "Outline"
             }
           }
         ]
@@ -201,27 +176,6 @@
       "bases:Create new base": false
     }
   },
-  "active": "9fab39da23fdb77c",
-  "lastOpenFiles": [
-    "Tetris vs Hero/Фаза 1 — Single Player.md",
-    "Tetris vs Hero.md",
-    "Tetris vs Hero/Мультиплеер — Архитектура MVP.md",
-    "Tetris vs Hero/Персонаж — Физика.md",
-    "Tetris vs Hero/Фаза 3 — Полировка.md",
-    "Tetris vs Hero/Фаза 2 — Мультиплеер MVP.md",
-    "Tetris vs Hero/Фаза 2 — Мультиплеер MVP.md.tmp.14192.1771891617986",
-    "Tetris vs Hero/Фаза 1 — Single Player.md.tmp.14192.1771891559369",
-    "Tetris vs Hero/Роадмап.md",
-    "Tetris vs Hero/VictoryModel.md",
-    "Tetris vs Hero/TetrisBoard — API.md",
-    "Tetris vs Hero/Статус реализации.md",
-    "Tetris vs Hero/Взаимодействия блоков и персонажа.md",
-    "Tetris vs Hero/Управление.md",
-    "Tetris vs Hero/Персонаж — Физика.md.tmp.14192.1771889672950",
-    "Tetris vs Hero/Архитектура MVC.md",
-    "Tetris vs Hero/Типы блоков.md",
-    "Tetris vs Hero/Концепция.md",
-    "Tetris vs Hero",
-    "Добро пожаловать.md"
-  ]
+  "active": "d96733d0918f58a0",
+  "lastOpenFiles": []
 }
