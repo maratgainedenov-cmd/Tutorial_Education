@@ -45,9 +45,7 @@ public class TetrisBoard
         {
             if (!Grid.IsValid(cell.x, cell.y)) continue;
 
-            CellData data = piece.IsWeak
-                ? CellData.Weak(piece.Type + 8, piece.WeakHP)
-                : CellData.Strong(piece.Type + 1);
+            CellData data = CellData.Block(piece.Type + 1, piece.HP);
 
             Grid.SetValue(cell.x, cell.y, data);
         }
@@ -76,18 +74,18 @@ public class TetrisBoard
         return cleared;
     }
 
-    // ─── Повреждение слабых блоков ────────────────────────────────────────────
+    // ─── Повреждение блоков ───────────────────────────────────────────────────
 
     /// <summary>
-    /// Нанести урон слабому блоку в ячейке (x, y).
-    /// Возвращает true, если блок разрушен.
+    /// Нанести урон блоку в ячейке (x, y).
+    /// Возвращает true, если блок разрушен (HP ≤ 0).
     /// </summary>
     public bool DamageCell(int x, int y, int damage = 1)
     {
         if (!Grid.IsValid(x, y)) return false;
 
         CellData cell = Grid.GetValue(x, y);
-        if (cell.IsEmpty || !cell.IsWeak) return false;
+        if (cell.IsEmpty) return false;
 
         cell.HP -= damage;
         if (cell.HP <= 0)

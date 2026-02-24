@@ -1,21 +1,18 @@
 /// <summary>
 /// Данные одной ячейки доски.
-/// PieceType: 0 = пусто, 1-7 = обычный блок (тип фигуры), 8+ = слабый блок.
+/// PieceType: 0 = пусто, 1-7 = блок (тип фигуры).
+/// HP / MaxHP: текущее и начальное здоровье блока.
 /// </summary>
 public struct CellData
 {
-    public int  PieceType;
-    public bool IsWeak;
-    public int  HP;
-    public int  MaxHP;  // начальный HP для нормализации визуала повреждений
+    public int PieceType;
+    public int HP;
+    public int MaxHP;
 
     public bool IsEmpty => PieceType == 0;
 
-    public static CellData Empty => new CellData { PieceType = 0, IsWeak = false, HP = 0, MaxHP = 0 };
+    public static CellData Empty => new CellData { PieceType = 0, HP = 0, MaxHP = 0 };
 
-    public static CellData Strong(int type) =>
-        new CellData { PieceType = type, IsWeak = false, HP = 0, MaxHP = 0 };
-
-    public static CellData Weak(int type, int hp) =>
-        new CellData { PieceType = type, IsWeak = true, HP = hp, MaxHP = hp };
+    public static CellData Block(int type, int hp) =>
+        new CellData { PieceType = type, HP = hp, MaxHP = hp };
 }

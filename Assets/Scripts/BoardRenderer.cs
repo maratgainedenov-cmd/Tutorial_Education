@@ -69,7 +69,6 @@ public class BoardRenderer : MonoBehaviour
         if (piece != null)
         {
             Color c = TetrominoData.Colors[piece.Type];
-            if (piece.IsWeak) c = Color.Lerp(c, Color.white, 0.4f);
             foreach (var cell in piece.GetCells())
                 if (_board.Grid.IsValid(cell.x, cell.y))
                     _cells[cell.x, cell.y].color = c;
@@ -98,20 +97,14 @@ public class BoardRenderer : MonoBehaviour
             return;
         }
 
-        // Цвет по типу фигуры (цикличный для слабых блоков)
         int colorIndex = (data.PieceType - 1) % TetrominoData.Colors.Length;
         Color c = TetrominoData.Colors[colorIndex];
 
-        if (data.IsWeak)
+        // Затемнение пропорционально полученному урону
+        if (data.MaxHP > 0 && data.HP < data.MaxHP)
         {
-            c = Color.Lerp(c, Color.white, 0.4f);
-
-            // Затемнение пропорционально полученному урону
-            if (data.MaxHP > 0 && data.HP < data.MaxHP)
-            {
-                float damageFraction = 1f - (float)data.HP / data.MaxHP;
-                c = Color.Lerp(c, Color.black, damageFraction * 0.5f);
-            }
+            float damageFraction = 1f - (float)data.HP / data.MaxHP;
+            c = Color.Lerp(c, Color.black, damageFraction * 0.5f);
         }
 
         sr.color = c;

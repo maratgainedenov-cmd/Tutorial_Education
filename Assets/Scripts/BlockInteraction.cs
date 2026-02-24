@@ -2,8 +2,9 @@ using UnityEngine;
 
 /// <summary>
 /// MonoBehaviour: связывает атаку персонажа с Grid2D и VictoryModel.
-/// Слабые блоки → удар → разрушение → очки.
-/// Очищенные линии тоже засчитываются персонажу.
+/// Каждый удар по блоку: снимает HP и толкает персонажа обратно.
+/// При HP = 0 блок ломается — очко персонажу.
+/// Очищенные тетрисом линии тоже засчитываются персонажу.
 /// Вызови Init(...) из GameManager.
 /// </summary>
 public class BlockInteraction : MonoBehaviour
@@ -18,8 +19,8 @@ public class BlockInteraction : MonoBehaviour
         _victory   = victory;
         _character = character;
 
-        character.OnAttack       += HandleAttack;
-        board.OnLinesCleared     += HandleLinesCleared;
+        character.OnAttack   += HandleAttack;
+        board.OnLinesCleared += HandleLinesCleared;
     }
 
     // ─── Обработчики ──────────────────────────────────────────────────────────
@@ -27,11 +28,11 @@ public class BlockInteraction : MonoBehaviour
     /// <summary>
     /// Персонаж ударил в направлении dir.
     /// Проверяем ячейки (x, y) и (x, y+1) — персонаж занимает ~2 клетки в высоту.
-    /// Если попал по сильному блоку — вызывает анимацию отдачи.
+    /// Каждый удар: снимает 1 HP и толкает персонажа. При HP = 0 блок разрушен.
     /// </summary>
     private void HandleAttack(int x, int y, int dir)
     {
-        bool hitStrong = false;
+        bool hitSomething = false;
 
         for (int dy = 0; dy <= 1; dy++)
         {
@@ -40,18 +41,14 @@ public class BlockInteraction : MonoBehaviour
             CellData cell = _board.Grid.GetValue(x, y + dy);
             if (cell.IsEmpty) continue;
 
-            if (!cell.IsWeak)
-            {
-                hitStrong = true;
-                continue;
-            }
+            hitSomething = true;
 
             bool destroyed = _board.DamageCell(x, y + dy);
             if (destroyed)
                 _victory.AddDestroyedBlocks(1);
         }
 
-        if (hitStrong)
+        if (hitSomething)
             _character.PlayHitStrong();
     }
 

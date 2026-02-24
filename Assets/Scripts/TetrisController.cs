@@ -27,9 +27,8 @@ public class TetrisController : MonoBehaviour
     [SerializeField] private KeyCode _keySoftDrop  = KeyCode.DownArrow;
     [SerializeField] private KeyCode _keyHardDrop  = KeyCode.Space;
 
-    [Header("Слабые блоки")]
-    [SerializeField] [Range(0f, 1f)] private float _weakPieceChance = 0.3f;
-    [SerializeField]                 private int   _weakBlockHP     = 2;
+    [Header("Блоки")]
+    [SerializeField] private int _blockHP = 3;
 
     // ─── Публичный доступ ─────────────────────────────────────────────────────
 
@@ -139,7 +138,7 @@ public class TetrisController : MonoBehaviour
     private void UpdateGhost()
     {
         if (Current == null) return;
-        Ghost = new ActivePiece(Current.Type, Current.Pos, Current.IsWeak, Current.WeakHP);
+        Ghost = new ActivePiece(Current.Type, Current.Pos, Current.HP);
         Ghost.SetRotation(Current.Rotation);
 
         while (Board.IsValidPosition(Ghost))
@@ -151,11 +150,10 @@ public class TetrisController : MonoBehaviour
 
     private void SpawnPiece()
     {
-        int       type      = UnityEngine.Random.Range(0, TetrominoData.Count);
-        bool      isWeak    = UnityEngine.Random.value < _weakPieceChance;
-        var       spawnPos  = new Vector2Int(_boardWidth / 2 - 2, _boardHeight - 4);
+        int type     = UnityEngine.Random.Range(0, TetrominoData.Count);
+        var spawnPos = new Vector2Int(_boardWidth / 2 - 2, _boardHeight - 4);
 
-        Current = new ActivePiece(type, spawnPos, isWeak, _weakBlockHP);
+        Current = new ActivePiece(type, spawnPos, _blockHP);
 
         if (!Board.CanSpawn(Current))
         {

@@ -5,19 +5,17 @@ using UnityEngine;
 /// </summary>
 public class ActivePiece
 {
-    public int       Type     { get; private set; }
-    public int       Rotation { get; private set; }
-    public Vector2Int Pos     { get; private set; }
-    public bool      IsWeak   { get; private set; }
-    public int       WeakHP   { get; private set; }
+    public int        Type     { get; private set; }
+    public int        Rotation { get; private set; }
+    public Vector2Int Pos      { get; private set; }
+    public int        HP       { get; private set; }
 
-    public ActivePiece(int type, Vector2Int spawnPos, bool isWeak = false, int weakHP = 2)
+    public ActivePiece(int type, Vector2Int spawnPos, int hp = 3)
     {
         Type     = type;
         Rotation = 0;
         Pos      = spawnPos;
-        IsWeak   = isWeak;
-        WeakHP   = weakHP;
+        HP       = hp;
     }
 
     /// <summary>Абсолютные координаты всех 4 клеток фигуры.</summary>

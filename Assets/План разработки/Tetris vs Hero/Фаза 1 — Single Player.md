@@ -81,8 +81,7 @@
 | Cell Size | `1` | Размер ячейки в Unity единицах |
 | Fall Interval | `1.0` | Секунд между шагами вниз |
 | Soft Drop Mult | `0.08` | Ускорение при удержании ↓ |
-| Weak Piece Chance | `0.3` | 30% фигур будут слабыми |
-| Weak Block HP | `2` | HP слабого блока |
+| Block HP | `3` | HP каждого блока (3 удара = сломан) |
 
 ### Позиция персонажа
 
@@ -127,9 +126,8 @@
 | Параметр | По умолчанию | Где менять | Влияние |
 |----------|-------------|------------|---------|
 | `blocksToWin` | 30 | GameManager | Длина партии |
-| `weakPieceChance` | 0.3 | TetrisController | Частота слабых блоков |
 | `fallInterval` | 1.0 | TetrisController | Скорость тетриса |
-| `weakBlockHP` | 2 | TetrisController | Прочность слабых блоков |
+| `blockHP` | 3 | TetrisController | Сколько ударов ломает блок |
 | `jumpForce` | 12 | CharacterController2D | Высота прыжка |
 | `maxSpeed` | 6 | CharacterController2D | Скорость бега |
 
