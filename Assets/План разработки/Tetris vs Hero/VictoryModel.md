@@ -32,9 +32,8 @@ event Action      OnTetrisWin                // тетрис победил
 - `GameManager.CheckCrush()` — блок зафиксирован на персонаже
 - `GameManager.OnTetrisStateChanged()` — доска переполнена (GameOver-фоллбэк)
 
-> ⚠️ Путаница: комментарий в GameManager говорит «Тетрис проиграл»,
-> но вызывает `TriggerTetrisWin()`. Логика: GameOver — фоллбэк на случай,
-> если CheckCrush не поймал crush. Комментарий вводит в заблуждение.
+> GameOver — фоллбэк на случай, если `CheckCrush` не поймал crush при фиксации.
+> Комментарий в `GameManager.OnTetrisStateChanged` исправлен.
 
 ---
 
