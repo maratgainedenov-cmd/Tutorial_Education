@@ -38,4 +38,4 @@ event Action      OnPiecePlaced    // после фиксации фигуры
 
 ---
 
-← [[Tetris vs Hero]]
+← [[Tetris vs Hero]] · [[Архитектура MVC]] · → [[Взаимодействия блоков и персонажа]] · [[Типы блоков]]

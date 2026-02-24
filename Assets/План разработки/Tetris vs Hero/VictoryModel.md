@@ -38,4 +38,4 @@ event Action      OnTetrisWin                // тетрис победил
 
 ---
 
-← [[Tetris vs Hero]]
+← [[Tetris vs Hero]] · [[Архитектура MVC]] · → [[Взаимодействия блоков и персонажа]]

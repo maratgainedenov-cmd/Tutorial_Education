@@ -241,5 +241,4 @@ private void Update()
 
 ---
 
-← [[Tetris vs Hero]]
-→ [[Статус реализации]]
+← [[Tetris vs Hero]] · [[Фаза 2 — Мультиплеер MVP]] · → [[Фаза 3 — Полировка]]
