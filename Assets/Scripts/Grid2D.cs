@@ -1,86 +1,41 @@
-using System;
 using UnityEngine;
 
-/// <summary>
-/// Универсальная 2D-сетка. T — тип данных в каждой ячейке.
-/// </summary>
-public class Grid2D<T>
+public class Grid2D : MonoBehaviour
 {
-    public event Action<int, int, T> OnValueChanged;
+    [SerializeField] private Cell _cellPrefab;
+    [SerializeField] private int _width = 10;
+    [SerializeField] private int _height = 20;
+    [SerializeField] private float _cellSize = 1f;
 
-    public int Width  { get; private set; }
-    public int Height { get; private set; }
-    public float CellSize { get; private set; }
+    private Cell[,] _cells;
 
-    private readonly Vector3 _origin;
-    private readonly T[,] _grid;
-
-    // ─── Конструктор ──────────────────────────────────────────────────────────
-
-    /// <param name="width">Количество столбцов</param>
-    /// <param name="height">Количество строк</param>
-    /// <param name="cellSize">Размер одной ячейки в мировых единицах</param>
-    /// <param name="origin">Нижний левый угол сетки в мировом пространстве</param>
-    /// <param name="createCell">Фабрика для создания начального значения (необязательно)</param>
-    public Grid2D(int width, int height, float cellSize, Vector3 origin,
-                  Func<int, int, T> createCell = null)
+    private void Start()
     {
-        Width    = width;
-        Height   = height;
-        CellSize = cellSize;
-        _origin  = origin;
-        _grid    = new T[width, height];
+        Build();
+    }
 
-        if (createCell != null)
+    public void Build()
+    {
+        _cells = new Cell[_width, _height];
+
+        for (int x = 0; x < _width; x++)
         {
-            for (int x = 0; x < width; x++)
-            for (int y = 0; y < height; y++)
-                _grid[x, y] = createCell(x, y);
+            for (int y = 0; y < _height; y++)
+            {
+                Vector3 position = new Vector3(x * _cellSize, y * _cellSize, 0f);
+                Cell cell = Instantiate(_cellPrefab, position, Quaternion.identity, transform);
+                cell.Init(x, y);
+                _cells[x, y] = cell;
+            }
         }
     }
 
-    // ─── Конвертация координат ────────────────────────────────────────────────
-
-    /// <summary>Центр ячейки (x, y) в мировом пространстве.</summary>
-    public Vector3 GetCellCenter(int x, int y)
-        => _origin + new Vector3(x * CellSize + CellSize * 0.5f,
-                                 y * CellSize + CellSize * 0.5f);
-
-    /// <summary>Нижний левый угол ячейки (x, y) в мировом пространстве.</summary>
-    public Vector3 GetCellOrigin(int x, int y)
-        => _origin + new Vector3(x * CellSize, y * CellSize);
-
-    /// <summary>Преобразует мировую позицию в индексы ячейки.</summary>
-    public void WorldToCell(Vector3 worldPos, out int x, out int y)
+    public Cell GetCell(int x, int y)
     {
-        x = Mathf.FloorToInt((worldPos.x - _origin.x) / CellSize);
-        y = Mathf.FloorToInt((worldPos.y - _origin.y) / CellSize);
+        if (x < 0 || x >= _width || y < 0 || y >= _height) return null;
+        return _cells[x, y];
     }
 
-    // ─── Доступ к данным ──────────────────────────────────────────────────────
-
-    public bool IsValid(int x, int y)
-        => x >= 0 && y >= 0 && x < Width && y < Height;
-
-    public void SetValue(int x, int y, T value)
-    {
-        if (!IsValid(x, y)) return;
-        _grid[x, y] = value;
-        OnValueChanged?.Invoke(x, y, value);
-    }
-
-    public void SetValue(Vector3 worldPos, T value)
-    {
-        WorldToCell(worldPos, out int x, out int y);
-        SetValue(x, y, value);
-    }
-
-    public T GetValue(int x, int y)
-        => IsValid(x, y) ? _grid[x, y] : default;
-
-    public T GetValue(Vector3 worldPos)
-    {
-        WorldToCell(worldPos, out int x, out int y);
-        return GetValue(x, y);
-    }
+    public bool IsInBounds(int x, int y) =>
+        x >= 0 && x < _width && y >= 0 && y < _height;
 }
