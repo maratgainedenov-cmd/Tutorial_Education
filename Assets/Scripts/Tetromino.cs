@@ -42,6 +42,8 @@ public class Tetromino : MonoBehaviour
         new Color(1f, 0.5f, 0f),       // L — orange
     };
 
+    public static Color GetColor(TetrominoType type) => Colors[(int)type];
+
     public void Init(TetrominoType type, Vector2Int spawnPivot)
     {
         Type = type;
@@ -54,7 +56,8 @@ public class Tetromino : MonoBehaviour
         for (int i = 0; i < _offsets.Length; i++)
         {
             Vector2Int gridPos = _pivot + _offsets[i];
-            Block block = Instantiate(_blockPrefab, GridToWorld(gridPos), Quaternion.identity, transform);
+            Block block = Instantiate(_blockPrefab, transform);
+            block.transform.localPosition = GridToWorld(gridPos);
             block.SetColor(color);
             _blocks[i] = block;
         }
@@ -112,7 +115,7 @@ public class Tetromino : MonoBehaviour
         for (int i = 0; i < _blocks.Length; i++)
         {
             Vector2Int gridPos = _pivot + _offsets[i];
-            _blocks[i].transform.position = GridToWorld(gridPos);
+            _blocks[i].transform.localPosition = GridToWorld(gridPos);
         }
     }
 

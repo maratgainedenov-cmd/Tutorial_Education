@@ -4,6 +4,7 @@ public class Board : MonoBehaviour
 {
     [SerializeField] private int _width = 10;
     [SerializeField] private int _height = 20;
+    [SerializeField] private Block _blockPrefab;
 
     public int Width => _width;
     public int Height => _height;
@@ -17,10 +18,12 @@ public class Board : MonoBehaviour
 
     public void Lock(Vector2Int[] positions, Block[] blocks)
     {
+        _grid ??= new Block[_width, _height];
+
         for (int i = 0; i < positions.Length; i++)
         {
             var pos = positions[i];
-            if (pos.y < _height)
+            if (pos.x >= 0 && pos.x < _width && pos.y >= 0 && pos.y < _height)
             {
                 _grid[pos.x, pos.y] = blocks[i];
                 blocks[i].transform.SetParent(transform);
@@ -40,7 +43,7 @@ public class Board : MonoBehaviour
 
             ClearLine(y);
             ShiftDown(y);
-            y--; // перепроверить эту же строку, она теперь другая
+            y--;
         }
     }
 
@@ -72,12 +75,11 @@ public class Board : MonoBehaviour
                 _grid[x, y + 1] = null;
 
                 if (_grid[x, y] != null)
-                    _grid[x, y].transform.position = new Vector3(x, y, 0f);
+                    _grid[x, y].transform.localPosition = new Vector3(x, y, 0f);
             }
         }
     }
 
-    // Settles each column: blocks fall down to fill any gaps
     private void ApplyGravity()
     {
         for (int x = 0; x < _width; x++)
@@ -91,7 +93,7 @@ public class Board : MonoBehaviour
                 {
                     _grid[x, writeY] = _grid[x, y];
                     _grid[x, y] = null;
-                    _grid[x, writeY].transform.position = new Vector3(x, writeY, 0f);
+                    _grid[x, writeY].transform.localPosition = new Vector3(x, writeY, 0f);
                 }
 
                 writeY++;
@@ -99,9 +101,25 @@ public class Board : MonoBehaviour
         }
     }
 
+    public bool TryPushBlock(Vector2Int pos, Vector2Int dir)
+    {
+        if (!IsOccupied(pos)) return false;
+
+        Vector2Int target = pos + dir;
+        if (!IsInBounds(target) || IsOccupied(target)) return false;
+
+        Block block = _grid[pos.x, pos.y];
+        _grid[pos.x, pos.y] = null;
+        _grid[target.x, target.y] = block;
+        block.transform.localPosition = new Vector3(target.x, target.y, 0f);
+
+        ApplyGravity();
+        return true;
+    }
+
     public bool IsInBounds(Vector2Int pos)
     {
-        return pos.x >= 0 && pos.x < _width && pos.y >= 0;
+        return pos.x >= 0 && pos.x < _width && pos.y >= 0 && pos.y < _height;
     }
 
     public bool IsOccupied(Vector2Int pos)
@@ -109,6 +127,27 @@ public class Board : MonoBehaviour
         if (pos.x < 0 || pos.x >= _width || pos.y < 0 || pos.y >= _height)
             return false;
         return _grid[pos.x, pos.y] != null;
+    }
+
+    public void LockRemote(Vector2Int[] positions, TetrominoType type)
+    {
+        _grid ??= new Block[_width, _height];
+        Color color = Tetromino.GetColor(type);
+
+        for (int i = 0; i < positions.Length; i++)
+        {
+            var pos = positions[i];
+            if (pos.x < 0 || pos.x >= _width || pos.y < 0 || pos.y >= _height) continue;
+
+            Block b = Instantiate(_blockPrefab, transform);
+            b.transform.localPosition = new Vector3(pos.x, pos.y, 0f);
+            b.SetColor(color);
+            _grid[pos.x, pos.y] = b;
+        }
+
+        ApplyGravity();
+        ClearLines();
+        ApplyGravity();
     }
 
     public bool IsValidPositions(Vector2Int[] positions)
