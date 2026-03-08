@@ -11,12 +11,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TetrisController _tetrisController;
     [SerializeField] private CharacterSpawner _characterSpawner;
 
+    [Header("Debug")]
+    [SerializeField] private bool _localDebugMode;
+    public static bool LocalDebug { get; private set; }
+
     private bool _isPaused;
     private bool _isPlaying;
 
     private void Awake()
     {
         Instance = this;
+        LocalDebug = _localDebugMode;
         _gameOverPanel?.SetActive(false);
         _pausePanel?.SetActive(false);
         _startPanel?.SetActive(true);
@@ -35,7 +40,7 @@ public class GameManager : MonoBehaviour
         _isPlaying = true;
         Time.timeScale = 1f;
         _tetrisController?.StartGame();
-        if (!Photon.Pun.PhotonNetwork.IsMasterClient)
+        if (LocalDebug || !Photon.Pun.PhotonNetwork.IsMasterClient)
             _characterSpawner?.StartGame();
     }
 

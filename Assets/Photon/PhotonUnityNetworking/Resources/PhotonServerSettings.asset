@@ -41,6 +41,7 @@ MonoBehaviour:
   - RespawnSpaceship
   - RpcLock
   - RpcDie
+  - RpcPushBlock
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

@@ -9,10 +9,20 @@ public class TetrominoSpawner : MonoBehaviour
     [SerializeField] private Vector2Int _spawnPosition = new Vector2Int(4, 18);
 
     public event Action<Tetromino> OnSpawned;
+    public event Action<TetrominoType> OnNextChanged;
+
+    public TetrominoType NextType { get; private set; }
+
+    private void Awake()
+    {
+        NextType = (TetrominoType)Random.Range(0, 7);
+    }
 
     public Tetromino SpawnNext()
     {
-        TetrominoType type = (TetrominoType)Random.Range(0, 7);
+        TetrominoType type = NextType;
+        NextType = (TetrominoType)Random.Range(0, 7);
+        OnNextChanged?.Invoke(NextType);
         return Spawn(type);
     }
 

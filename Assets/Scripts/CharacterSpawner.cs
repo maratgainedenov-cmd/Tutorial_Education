@@ -7,6 +7,14 @@ public class CharacterSpawner : MonoBehaviour
 
     public void StartGame()
     {
-        PhotonNetwork.Instantiate(_characterPrefabName, transform.position, Quaternion.identity);
+        if (GameManager.LocalDebug)
+        {
+            var prefab = Resources.Load<GameObject>(_characterPrefabName);
+            Instantiate(prefab, transform.position, Quaternion.identity);
+        }
+        else
+        {
+            PhotonNetwork.Instantiate(_characterPrefabName, transform.position, Quaternion.identity);
+        }
     }
 }

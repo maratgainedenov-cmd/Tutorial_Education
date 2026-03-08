@@ -15,6 +15,13 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
     private void Start()
     {
+        if (GameManager.LocalDebug)
+        {
+            _lobbyPanel.SetActive(false);
+            GameManager.Instance.StartGame();
+            return;
+        }
+
         Debug.Log("LobbyManager Start");
         _createButton.onClick.AddListener(OnCreateRoomClicked);
         _joinButton.onClick.AddListener(OnJoinRoomClicked);

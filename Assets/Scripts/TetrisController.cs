@@ -1,5 +1,6 @@
 using UnityEngine;
 using Photon.Pun;
+using DG.Tweening;
 
 public class TetrisController : MonoBehaviourPun, IPunObservable
 {
@@ -14,6 +15,10 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
     // Mirror blocks shown on Player 2's screen
     private Block[] _mirrorBlocks;
 
+    // Ghost piece (тень куда упадёт фигура)
+    private Block[] _ghostBlocks;
+    private SpriteRenderer[][] _ghostRenderers;
+
     private void OnEnable()
     {
         _spawner.OnSpawned += OnSpawned;
@@ -22,11 +27,12 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
     private void OnDisable()
     {
         _spawner.OnSpawned -= OnSpawned;
+        DestroyGhostBlocks();
     }
 
     public void StartGame()
     {
-        if (PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.IsMasterClient || GameManager.LocalDebug)
         {
             _spawner.SpawnNext();
         }
@@ -53,10 +59,11 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private void Update()
     {
-        if (!PhotonNetwork.IsMasterClient) return;
+        if (!PhotonNetwork.IsMasterClient && !GameManager.LocalDebug) return;
         if (_current == null) return;
 
         HandleInput();
+        UpdateGhost();
 
         _timer += Time.deltaTime;
         if (_timer >= _fallInterval)
@@ -118,7 +125,10 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
         }
         int typeInt = (int)_current.Type;
 
-        photonView.RPC(nameof(RpcLock), RpcTarget.All, xs, ys, typeInt);
+        if (GameManager.LocalDebug)
+            RpcLock(xs, ys, typeInt);
+        else
+            photonView.RPC(nameof(RpcLock), RpcTarget.All, xs, ys, typeInt);
     }
 
     [PunRPC]
@@ -128,8 +138,9 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
         for (int i = 0; i < xs.Length; i++)
             positions[i] = new Vector2Int(xs[i], ys[i]);
 
-        if (PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.IsMasterClient || GameManager.LocalDebug)
         {
+            SetGhostActive(false);
             _board.Lock(_current.GetPositions(), _current.GetBlocks());
             Destroy(_current.gameObject);
             _current = null;
@@ -149,6 +160,89 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
     {
         _current = tetromino;
         _timer = 0f;
+        EnsureGhostBlocks();
+    }
+
+    // ── Ghost piece ──────────────────────────────────────────────────────
+
+    private void EnsureGhostBlocks()
+    {
+        if (_ghostBlocks != null && _ghostBlocks[0] != null) return;
+        if (_blockPrefab == null) return;
+
+        DestroyGhostBlocks();
+
+        _ghostBlocks    = new Block[4];
+        _ghostRenderers = new SpriteRenderer[4][];
+
+        for (int i = 0; i < 4; i++)
+        {
+            _ghostBlocks[i] = Instantiate(_blockPrefab, _board.transform);
+            _ghostBlocks[i].gameObject.SetActive(false);
+
+            foreach (var col in _ghostBlocks[i].GetComponentsInChildren<Collider2D>())
+                col.enabled = false;
+
+            // Кешируем ВСЕ SpriteRenderer в блоке — неважно на каком уровне иерархии
+            _ghostRenderers[i] = _ghostBlocks[i].GetComponentsInChildren<SpriteRenderer>();
+            foreach (var sr in _ghostRenderers[i]) sr.sortingOrder = 5;
+        }
+
+    }
+
+    private void DestroyGhostBlocks()
+    {
+        if (_ghostBlocks == null) return;
+        foreach (var b in _ghostBlocks)
+            if (b != null) Destroy(b.gameObject);
+        _ghostBlocks    = null;
+        _ghostRenderers = null as SpriteRenderer[][];
+
+    }
+
+    private void UpdateGhost()
+    {
+        if (_ghostBlocks == null) { EnsureGhostBlocks(); return; }
+
+        var positions = _current.GetPositions();
+
+        // Опускаем вниз пока можно
+        int drop = 0;
+        while (_board.IsValidPositions(Shifted(positions, -drop - 1)))
+            drop++;
+
+        // Если тень совпадает с фигурой — прячем
+        if (drop == 0) { SetGhostActive(false); return; }
+
+        var ghostPos = Shifted(positions, -drop);
+        Color baseColor = Tetromino.GetColor(_current.Type);
+
+        // Тень: тот же оттенок, но темнее и полупрозрачная
+        Color ghostColor = new Color(baseColor.r * 0.75f, baseColor.g * 0.75f, baseColor.b * 0.75f, 0.6f);
+
+        for (int i = 0; i < _ghostBlocks.Length; i++)
+        {
+            _ghostBlocks[i].gameObject.SetActive(true);
+            _ghostBlocks[i].transform.localPosition =
+                new Vector3(ghostPos[i].x, ghostPos[i].y, 0.1f);
+            if (_ghostRenderers[i] != null)
+                foreach (var sr in _ghostRenderers[i]) sr.color = ghostColor;
+        }
+    }
+
+    private static Vector2Int[] Shifted(Vector2Int[] positions, int dy)
+    {
+        var result = new Vector2Int[positions.Length];
+        for (int i = 0; i < positions.Length; i++)
+            result[i] = positions[i] + new Vector2Int(0, dy);
+        return result;
+    }
+
+    private void SetGhostActive(bool active)
+    {
+        if (_ghostBlocks == null) return;
+        foreach (var b in _ghostBlocks)
+            if (b != null) b.gameObject.SetActive(active);
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)

@@ -1,4 +1,5 @@
 using UnityEngine;
+using DG.Tweening;
 
 public class Board : MonoBehaviour
 {
@@ -30,6 +31,8 @@ public class Board : MonoBehaviour
             }
         }
 
+        Camera.main?.transform.DOShakePosition(0.08f, 0.15f, 10, 90, false, true);
+
         ApplyGravity();
         ClearLines();
         ApplyGravity();
@@ -41,6 +44,7 @@ public class Board : MonoBehaviour
         {
             if (!IsLineFull(y)) continue;
 
+            Camera.main?.transform.DOShakePosition(0.3f, 0.5f, 15, 90, false, true);
             ClearLine(y);
             ShiftDown(y);
             y--;
@@ -80,6 +84,28 @@ public class Board : MonoBehaviour
         }
     }
 
+    private void ApplyGravityAnimated()
+    {
+        for (int x = 0; x < _width; x++)
+        {
+            int writeY = 0;
+            for (int y = 0; y < _height; y++)
+            {
+                if (_grid[x, y] == null) continue;
+
+                if (writeY != y)
+                {
+                    _grid[x, writeY] = _grid[x, y];
+                    _grid[x, y] = null;
+                    _grid[x, writeY].transform.DOLocalMove(new Vector3(x, writeY, 0f), 0.12f)
+                        .SetEase(Ease.OutBounce);
+                }
+
+                writeY++;
+            }
+        }
+    }
+
     private void ApplyGravity()
     {
         for (int x = 0; x < _width; x++)
@@ -111,9 +137,14 @@ public class Board : MonoBehaviour
         Block block = _grid[pos.x, pos.y];
         _grid[pos.x, pos.y] = null;
         _grid[target.x, target.y] = block;
-        block.transform.localPosition = new Vector3(target.x, target.y, 0f);
+        block.transform.DOLocalMove(new Vector3(target.x, target.y, 0f), 0.1f)
+            .SetEase(Ease.OutCubic)
+            .OnComplete(() =>
+            {
+                ClearLines();
+                ApplyGravityAnimated();
+            });
 
-        ApplyGravity();
         return true;
     }
 
