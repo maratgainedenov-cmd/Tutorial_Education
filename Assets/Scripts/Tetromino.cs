@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum TetrominoType { I, O, T, S, Z, J, L }
+public enum TetrominoType { I, O, T, S, Z, J, L, Bomb }
 
 public class Tetromino : MonoBehaviour
 {
@@ -29,6 +29,8 @@ public class Tetromino : MonoBehaviour
         new[] { new Vector2Int(-1, 0), new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(-1, 1) },
         // L
         new[] { new Vector2Int(-1, 0), new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(1, 1) },
+        // Bomb — крест
+        new[] { new Vector2Int(0, 0), new Vector2Int(-1, 0), new Vector2Int(1, 0), new Vector2Int(0, 1) },
     };
 
     private static readonly Color[] Colors =
@@ -40,6 +42,7 @@ public class Tetromino : MonoBehaviour
         Color.red,                     // Z
         Color.blue,                    // J
         new Color(1f, 0.5f, 0f),       // L — orange
+        new Color(1f, 0.1f, 0.1f),    // Bomb — ярко-красный
     };
 
     public static Color GetColor(TetrominoType type) => Colors[(int)type];
@@ -77,6 +80,20 @@ public class Tetromino : MonoBehaviour
     public void Move(Vector2Int direction)
     {
         _pivot += direction;
+        RefreshBlockPositions();
+    }
+
+    public void SetPivot(Vector2Int newPivot)
+    {
+        _pivot = newPivot;
+        RefreshBlockPositions();
+    }
+
+    public Vector2Int GetPivot() => _pivot;
+
+    public void SetOffsets(Vector2Int[] offsets)
+    {
+        _offsets = (Vector2Int[])offsets.Clone();
         RefreshBlockPositions();
     }
 

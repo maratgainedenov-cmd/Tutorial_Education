@@ -7,6 +7,33 @@ using UnityEditor.Animations;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
 
+public class CharacterAnimSetupWindow : EditorWindow
+{
+    int _ppu = 18;
+
+    [MenuItem("Tools/Setup Character Animations")]
+    static void OpenWindow()
+    {
+        var w = GetWindow<CharacterAnimSetupWindow>("Character Anim Setup");
+        w._ppu = EditorPrefs.GetInt("CharAnim_PPU", 18);
+        w.minSize = new Vector2(260, 100);
+    }
+
+    void OnGUI()
+    {
+        GUILayout.Label("Настройки анимации персонажа", EditorStyles.boldLabel);
+        _ppu = EditorGUILayout.IntField("PPU (размер спрайтов)", _ppu);
+        EditorGUILayout.HelpBox("Меньше = крупнее. Обычно 16–32.", MessageType.Info);
+
+        if (GUILayout.Button("Применить и пересоздать анимации"))
+        {
+            EditorPrefs.SetInt("CharAnim_PPU", _ppu);
+            CharacterAnimationSetup.Run(_ppu);
+            Close();
+        }
+    }
+}
+
 public static class CharacterAnimationSetup
 {
     const string SpritesBase = "Assets/Sprits/2D-Pixel-Art-Character-Template";
@@ -15,47 +42,27 @@ public static class CharacterAnimationSetup
     struct ClipConfig
     {
         public string folder, file;
-        public int cellSize, fps;
+        public int cellSize, ppu, fps;
         public bool loop;
+        public Vector2 pivot;
     }
 
-    [MenuItem("Tools/Set Character Sprites PPU = 20")]
-    static void SetPPU()
-    {
-        var guids = AssetDatabase.FindAssets("t:Texture2D", new[] { SpritesBase });
-        int count = 0;
-        foreach (var guid in guids)
-        {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (!path.EndsWith(".png")) continue;
-
-            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (importer == null) continue;
-
-            importer.spritePixelsPerUnit = 20;
-            importer.SaveAndReimport();
-            count++;
-        }
-        AssetDatabase.Refresh();
-        Debug.Log($"[CharAnim] PPU=20 применён к {count} текстурам.");
-    }
-
-    [MenuItem("Tools/Setup Character Animations")]
-    static void Setup()
+    public static void Run(int targetPPU)
     {
         Directory.CreateDirectory(OutputPath);
         AssetDatabase.Refresh();
 
         var configs = new ClipConfig[]
         {
-            new ClipConfig { folder = "Idle",  file = "Player Idle 48x48.png",     cellSize = 48, fps = 8,  loop = true  },
-            new ClipConfig { folder = "Run",   file = "player run 48x48.png",      cellSize = 48, fps = 12, loop = true  },
-            new ClipConfig { folder = "Jump",  file = "player new jump 48x48.png", cellSize = 48, fps = 10, loop = false },
-            new ClipConfig { folder = "Land",  file = "player land 48x48.png",     cellSize = 48, fps = 12, loop = false },
-            new ClipConfig { folder = "Push",      file = "player push 48x48.png",         cellSize = 48, fps = 10, loop = true  },
-            new ClipConfig { folder = "Death",     file = "Player Death 64x64.png",        cellSize = 48, fps = 8,  loop = false },
-            new ClipConfig { folder = "Wall Slide",file = "player wall slide 48x48.png",   cellSize = 48, fps = 8,  loop = true  },
-            new ClipConfig { folder = "Air Spin",  file = "player air spin 48x48.png",     cellSize = 48, fps = 10, loop = false },
+            new ClipConfig { folder = "Idle",       file = "Player Idle 48x48.png",           cellSize = 48, ppu = targetPPU, fps = 8,  loop = true,  pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Run",        file = "player run 48x48.png",            cellSize = 48, ppu = targetPPU, fps = 12, loop = true,  pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Jump",       file = "player new jump 48x48.png",       cellSize = 48, ppu = targetPPU, fps = 10, loop = false, pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Land",       file = "player land 48x48.png",           cellSize = 48, ppu = targetPPU, fps = 12, loop = false, pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Push",       file = "player push 48x48.png",           cellSize = 48, ppu = targetPPU, fps = 10, loop = true,  pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Death",      file = "Player Death 64x64.png",          cellSize = 64, ppu = targetPPU, fps = 8,  loop = false, pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Wall Slide", file = "player wall slide 48x48.png",     cellSize = 48, ppu = targetPPU, fps = 8,  loop = true,  pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Air Spin",   file = "player air spin 48x48.png",       cellSize = 48, ppu = targetPPU, fps = 10, loop = false, pivot = new Vector2(0.5f, 0f)    },
+            new ClipConfig { folder = "Punch",      file = "Player Punch 64x64.png",          cellSize = 64, ppu = targetPPU, fps = 10, loop = false, pivot = new Vector2(0.5f, 0.15f) },
         };
 
         // Шаг 1: нарезаем все спрайтшиты
@@ -63,7 +70,10 @@ public static class CharacterAnimationSetup
         {
             string path = $"{SpritesBase}/{cfg.folder}/{cfg.file}";
             if (!File.Exists(path)) { Debug.LogWarning($"[CharAnim] Не найден: {path}"); continue; }
-            SliceSpriteSheet(path, cfg.cellSize);
+            if (cfg.file.EndsWith(".aseprite"))
+                SetAsepritePPU(path, cfg.ppu);
+            else
+                SliceSpriteSheet(path, cfg.cellSize, cfg.ppu, cfg.pivot);
         }
 
         // Шаг 2: обновляем базу данных чтобы подгрузились нарезанные спрайты
@@ -76,8 +86,9 @@ public static class CharacterAnimationSetup
             string path = $"{SpritesBase}/{cfg.folder}/{cfg.file}";
             if (!File.Exists(path)) continue;
 
-            var clip = CreateClip(path, cfg.fps, cfg.loop, cfg.folder);
-            if (clip != null) clips[cfg.folder] = clip;
+            string clipName = cfg.folder == "Punch" ? "Destroy" : cfg.folder;
+            var clip = CreateClip(path, cfg.fps, cfg.loop, clipName);
+            if (clip != null) clips[clipName] = clip;
         }
 
         // Шаг 4: создаём Animator Controller
@@ -90,7 +101,27 @@ public static class CharacterAnimationSetup
 
     // ── Нарезка через новый API ──────────────────────────────────────────
 
-    static void SliceSpriteSheet(string assetPath, int cellSize)
+    static void SetAsepritePPU(string assetPath, int ppu)
+    {
+        // Для aseprite меняем только PPU через TextureImporter settings в meta
+        var importer = AssetImporter.GetAtPath(assetPath);
+        if (importer == null) return;
+        var so = new UnityEditor.SerializedObject(importer);
+        var ppuProp = so.FindProperty("textureImporterSettings.spritePixelsToUnits");
+        if (ppuProp != null)
+        {
+            ppuProp.floatValue = ppu;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            importer.SaveAndReimport();
+            Debug.Log($"[CharAnim] Aseprite PPU={ppu}: {assetPath}");
+        }
+        else
+        {
+            Debug.LogWarning($"[CharAnim] Не удалось найти PPU поле для {assetPath}");
+        }
+    }
+
+    static void SliceSpriteSheet(string assetPath, int cellSize, int ppu, Vector2 pivot)
     {
         var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
         if (importer == null) return;
@@ -99,7 +130,7 @@ public static class CharacterAnimationSetup
         importer.spriteImportMode    = SpriteImportMode.Multiple;
         importer.filterMode          = FilterMode.Point;
         importer.textureCompression  = TextureImporterCompression.Uncompressed;
-        importer.spritePixelsPerUnit = cellSize;
+        importer.spritePixelsPerUnit = ppu;
         importer.maxTextureSize      = 2048;
         importer.npotScale           = TextureImporterNPOTScale.None; // не масштабировать текстуру
         importer.SaveAndReimport();
@@ -129,7 +160,7 @@ public static class CharacterAnimationSetup
                 {
                     name      = $"{bName}_{idx}",
                     rect      = new Rect(col * cellSize, row * cellSize, cellSize, cellSize),
-                    pivot     = new Vector2(0.5f, 0f),
+                    pivot     = pivot,
                     alignment = SpriteAlignment.Custom,
                     spriteID  = GUID.Generate()
                 };
@@ -195,7 +226,9 @@ public static class CharacterAnimationSetup
         controller.AddParameter("IsGrounded",     AnimatorControllerParameterType.Bool);
         controller.AddParameter("IsPushing",      AnimatorControllerParameterType.Bool);
         controller.AddParameter("IsDead",         AnimatorControllerParameterType.Bool);
-        controller.AddParameter("IsWallSliding",  AnimatorControllerParameterType.Bool);
+        controller.AddParameter("IsWallSliding",   AnimatorControllerParameterType.Bool);
+        controller.AddParameter("Destroy",     AnimatorControllerParameterType.Trigger);
+        controller.AddParameter("DestroyDown", AnimatorControllerParameterType.Trigger);
 
         var sm     = controller.layers[0].stateMachine;
         var states = new Dictionary<string, AnimatorState>();
@@ -235,6 +268,25 @@ public static class CharacterAnimationSetup
             t.AddCondition(AnimatorConditionMode.If, 0, "IsPushing");
             t.hasExitTime = false; t.duration = 0; t.canTransitionToSelf = false;
             Tr(states, "Push", "Idle", t2 => t2.AddCondition(AnimatorConditionMode.IfNot, 0, "IsPushing"));
+        }
+
+        // AnyState → Land для удара снизу (Trigger)
+        if (states.ContainsKey("Land"))
+        {
+            var t = sm.AddAnyStateTransition(states["Land"]);
+            t.AddCondition(AnimatorConditionMode.If, 0, "DestroyDown");
+            t.hasExitTime = false; t.duration = 0; t.canTransitionToSelf = false;
+        }
+
+        // AnyState → Destroy для удара по бокам (Trigger)
+        if (states.ContainsKey("Destroy"))
+        {
+            var t = sm.AddAnyStateTransition(states["Destroy"]);
+            t.AddCondition(AnimatorConditionMode.If, 0, "Destroy");
+            t.hasExitTime = false; t.duration = 0; t.canTransitionToSelf = false;
+            var idleState = states.ContainsKey("Idle") ? states["Idle"] : sm.defaultState;
+            var t2 = states["Destroy"].AddTransition(idleState);
+            t2.hasExitTime = true; t2.exitTime = 1f; t2.duration = 0;
         }
 
         if (states.ContainsKey("Death"))

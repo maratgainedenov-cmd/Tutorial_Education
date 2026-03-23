@@ -3,18 +3,20 @@ using DG.Tweening;
 
 public class Board : MonoBehaviour
 {
-    [SerializeField] private int _width = 10;
+    [SerializeField] private int _width  = 10;
     [SerializeField] private int _height = 20;
     [SerializeField] private Block _blockPrefab;
 
-    public int Width => _width;
+    public int Width  => _width;
     public int Height => _height;
 
     private Block[,] _grid;
+    private Camera _camera;
 
     private void Awake()
     {
         _grid = new Block[_width, _height];
+        _camera = Camera.main;
     }
 
     public void Lock(Vector2Int[] positions, Block[] blocks)
@@ -31,9 +33,8 @@ public class Board : MonoBehaviour
             }
         }
 
-        Camera.main?.transform.DOShakePosition(0.08f, 0.15f, 10, 90, false, true);
+        _camera?.transform.DOShakePosition(0.08f, 0.15f, 10, 90, false, true);
 
-        ApplyGravity();
         ClearLines();
         ApplyGravity();
     }
@@ -44,7 +45,7 @@ public class Board : MonoBehaviour
         {
             if (!IsLineFull(y)) continue;
 
-            Camera.main?.transform.DOShakePosition(0.3f, 0.5f, 15, 90, false, true);
+            _camera?.transform.DOShakePosition(0.3f, 0.5f, 15, 90, false, true);
             ClearLine(y);
             ShiftDown(y);
             y--;
@@ -64,6 +65,7 @@ public class Board : MonoBehaviour
     {
         for (int x = 0; x < _width; x++)
         {
+            _grid[x, y].transform.DOKill();
             Destroy(_grid[x, y].gameObject);
             _grid[x, y] = null;
         }
@@ -79,29 +81,10 @@ public class Board : MonoBehaviour
                 _grid[x, y + 1] = null;
 
                 if (_grid[x, y] != null)
-                    _grid[x, y].transform.localPosition = new Vector3(x, y, 0f);
-            }
-        }
-    }
-
-    private void ApplyGravityAnimated()
-    {
-        for (int x = 0; x < _width; x++)
-        {
-            int writeY = 0;
-            for (int y = 0; y < _height; y++)
-            {
-                if (_grid[x, y] == null) continue;
-
-                if (writeY != y)
                 {
-                    _grid[x, writeY] = _grid[x, y];
-                    _grid[x, y] = null;
-                    _grid[x, writeY].transform.DOLocalMove(new Vector3(x, writeY, 0f), 0.12f)
-                        .SetEase(Ease.OutBounce);
+                    _grid[x, y].transform.DOKill();
+                    _grid[x, y].transform.localPosition = new Vector3(x, y, 0f);
                 }
-
-                writeY++;
             }
         }
     }
@@ -137,15 +120,46 @@ public class Board : MonoBehaviour
         Block block = _grid[pos.x, pos.y];
         _grid[pos.x, pos.y] = null;
         _grid[target.x, target.y] = block;
+
+        // Анимируем толчок
+        block.transform.DOKill();
         block.transform.DOLocalMove(new Vector3(target.x, target.y, 0f), 0.1f)
-            .SetEase(Ease.OutCubic)
-            .OnComplete(() =>
-            {
-                ClearLines();
-                ApplyGravityAnimated();
-            });
+            .SetEase(Ease.OutCubic);
+
+        // Проверяем линии сразу после обновления грида, не ждём анимацию
+        ClearLines();
+        ApplyGravity();
 
         return true;
+    }
+
+    public void Explode(Vector2Int center, int radius = 3)
+    {
+        bool hit = false;
+        for (int x = center.x - radius; x <= center.x + radius; x++)
+        {
+            for (int y = center.y - radius; y <= center.y + radius; y++)
+            {
+                float dx = x - center.x, dy = y - center.y;
+                if (dx * dx + dy * dy > radius * radius) continue;
+                var pos = new Vector2Int(x, y);
+                if (!IsInBounds(pos) || _grid[x, y] == null) continue;
+
+                var block = _grid[x, y];
+                _grid[x, y] = null;
+                block.transform.DOKill();
+                block.transform.DOScale(0f, 0.2f)
+                    .SetEase(Ease.InBack)
+                    .OnComplete(() => Destroy(block.gameObject));
+                hit = true;
+            }
+        }
+
+        if (hit)
+        {
+            _camera?.transform.DOShakePosition(0.5f, 1f, 20, 90, false, true);
+            ApplyGravity();
+        }
     }
 
     public bool IsInBounds(Vector2Int pos)
@@ -176,9 +190,21 @@ public class Board : MonoBehaviour
             _grid[pos.x, pos.y] = b;
         }
 
-        ApplyGravity();
         ClearLines();
         ApplyGravity();
+    }
+
+    public bool DestroyAt(Vector2Int pos)
+    {
+        if (!IsInBounds(pos) || _grid[pos.x, pos.y] == null) return false;
+        var block = _grid[pos.x, pos.y];
+        _grid[pos.x, pos.y] = null;
+        block.transform.DOKill();
+        block.transform.DOScale(0f, 0.15f)
+            .SetEase(Ease.InBack)
+            .OnComplete(() => Destroy(block.gameObject));
+        ApplyGravity();
+        return true;
     }
 
     public bool IsValidPositions(Vector2Int[] positions)

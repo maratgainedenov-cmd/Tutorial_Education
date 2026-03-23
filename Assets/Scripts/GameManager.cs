@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [SerializeField] private GameObject _startPanel;
-    [SerializeField] private GameObject _gameOverPanel;
+    [SerializeField] private GameObject _resultPanel;   // одна панель для победы и поражения
+    [SerializeField] private TMP_Text   _resultText;    // текст внутри панели
     [SerializeField] private GameObject _pausePanel;
     [SerializeField] private TetrisController _tetrisController;
     [SerializeField] private CharacterSpawner _characterSpawner;
@@ -20,9 +22,10 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         LocalDebug = _localDebugMode;
-        _gameOverPanel?.SetActive(false);
+        _resultPanel?.SetActive(false);
         _pausePanel?.SetActive(false);
         _startPanel?.SetActive(true);
         Time.timeScale = 1f;
@@ -46,21 +49,38 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
+        if (!_isPlaying) return;
         _isPlaying = false;
-        _gameOverPanel.SetActive(true);
+        ShowResult("Тетрис победил!");
+    }
+
+    public void Win()
+    {
+        if (!_isPlaying) return;
+        _isPlaying = false;
+        ShowResult("Персонаж победил!");
+    }
+
+    private void ShowResult(string message)
+    {
+        if (_resultText != null) _resultText.text = message;
+        _resultPanel?.SetActive(true);
         Time.timeScale = 0f;
     }
 
     public void TogglePause()
     {
         _isPaused = !_isPaused;
-        _pausePanel.SetActive(_isPaused);
+        _pausePanel?.SetActive(_isPaused);
         Time.timeScale = _isPaused ? 0f : 1f;
     }
 
     public void Restart()
     {
         Time.timeScale = 1f;
-        Photon.Pun.PhotonNetwork.LeaveRoom();
+        if (LocalDebug)
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        else
+            Photon.Pun.PhotonNetwork.LeaveRoom();
     }
 }

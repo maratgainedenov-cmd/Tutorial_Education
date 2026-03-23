@@ -12,16 +12,31 @@ public class TetrominoSpawner : MonoBehaviour
     public event Action<TetrominoType> OnNextChanged;
 
     public TetrominoType NextType { get; private set; }
+    public Vector2Int SpawnPosition => _spawnPosition;
 
     private void Awake()
     {
-        NextType = (TetrominoType)Random.Range(0, 7);
+        NextType = PickRandom();
+    }
+
+    private static TetrominoType PickRandom()
+    {
+        return Random.value < 0.15f
+            ? TetrominoType.Bomb
+            : (TetrominoType)Random.Range(0, 7);
+    }
+
+    // Продвигает очередь без спауна тетромино (для BombNPC)
+    public void ConsumeNext()
+    {
+        NextType = PickRandom();
+        OnNextChanged?.Invoke(NextType);
     }
 
     public Tetromino SpawnNext()
     {
         TetrominoType type = NextType;
-        NextType = (TetrominoType)Random.Range(0, 7);
+        NextType = PickRandom();
         OnNextChanged?.Invoke(NextType);
         return Spawn(type);
     }

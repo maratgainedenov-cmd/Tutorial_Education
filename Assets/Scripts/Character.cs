@@ -22,11 +22,21 @@ public class Character : MonoBehaviourPun
     [SerializeField] private Board _board;
     [SerializeField] private LineRenderer _facingLine;
 
+    [Header("Destroy Block")]
+    [SerializeField] private KeyCode _destroySideKey = KeyCode.X;
+    [SerializeField] private KeyCode _destroyDownKey = KeyCode.Z;
+    [SerializeField] private float _destroyCooldown = 5f;
+    private float _destroyCooldownTimer = 0f;
+
+    public float DestroyCooldownNormalized => _destroyCooldown > 0f ? Mathf.Clamp01(1f - _destroyCooldownTimer / _destroyCooldown) : 1f;
+    public bool IsDestroyReady => _destroyCooldownTimer <= 0f;
+
     [Header("Juice")]
     [SerializeField] private Transform _visual;
     [SerializeField] private Animator _animator;
 
     private Rigidbody2D _rb;
+    private Camera _camera;
     private bool _isGrounded;
     private bool _wasGrounded;
     private bool _isWallSliding;
@@ -38,6 +48,7 @@ public class Character : MonoBehaviourPun
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
+        _camera = Camera.main;
         if (_board == null) _board = FindObjectOfType<Board>();
     }
 
@@ -48,7 +59,7 @@ public class Character : MonoBehaviourPun
         if (!_wasGrounded && _isGrounded)
         {
             _visual?.DOPunchScale(new Vector3(-0.2f, 0.25f, 0), 0.2f, 5, 0.5f);
-            Camera.main?.transform.DOShakePosition(0.1f, 0.15f, 10, 90, false, true);
+            _camera?.transform.DOShakePosition(0.1f, 0.15f, 10, 90, false, true);
         }
         _isWallSliding = (_isTouchingLeftWall || _isTouchingRightWall)
                          && !_isGrounded && _rb.velocity.y < 0;
@@ -97,6 +108,13 @@ public class Character : MonoBehaviourPun
         if (Input.GetKeyDown(KeyCode.Keypad0) || Input.GetKeyDown(KeyCode.Insert))
             TryPush();
 
+        // Destroy block
+        _destroyCooldownTimer -= Time.deltaTime;
+        if (Input.GetKeyDown(_destroySideKey))
+            TryDestroySide();
+        if (Input.GetKeyDown(_destroyDownKey))
+            TryDestroyDown();
+
         // Jump
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.Space))
         {
@@ -128,19 +146,85 @@ public class Character : MonoBehaviourPun
 
     private void TryPush()
     {
+        _visual?.DOPunchScale(new Vector3(0.2f, -0.15f, 0) * _facingDir, 0.15f, 5, 0.5f);
+        _animator?.SetBool("IsPushing", true);
+        Invoke(nameof(StopPushAnim), 0.4f);
+
+        // Пробуем толкнуть BombNPC — ищем в зоне перед персонажем
+        Vector2 checkPos = (Vector2)transform.position + Vector2.right * _facingDir * 0.9f;
+        var cols = Physics2D.OverlapCircleAll(checkPos, 0.6f);
+        foreach (var col in cols)
+        {
+            var npc = col.GetComponent<BombNPC>()
+                   ?? col.GetComponentInParent<BombNPC>();
+            if (npc != null)
+            {
+                npc.Push(new Vector2(_facingDir, 0.5f));
+                return;
+            }
+        }
+
+        // Иначе толкаем блок тетриса
         if (_board == null) return;
         Vector2Int myPos = Vector2Int.RoundToInt(
             (Vector2)transform.position - (Vector2)_board.transform.position);
         Vector2Int pushPos = myPos + new Vector2Int(_facingDir, 0);
         Vector2Int pushDir = new Vector2Int(_facingDir, 0);
-        _visual?.DOPunchScale(new Vector3(0.2f, -0.15f, 0) * _facingDir, 0.15f, 5, 0.5f);
-        _animator?.SetBool("IsPushing", true);
-        Invoke(nameof(StopPushAnim), 0.4f);
         if (GameManager.LocalDebug)
             RpcPushBlock(pushPos.x, pushPos.y, pushDir.x, pushDir.y);
         else
             photonView.RPC(nameof(RpcPushBlock), RpcTarget.All,
                 pushPos.x, pushPos.y, pushDir.x, pushDir.y);
+    }
+
+    private void TryDestroySide()
+    {
+        if (_visual != null) { _visual.DOKill(); _visual.localScale = Vector3.one; }
+        _animator?.SetTrigger("Destroy");
+        if (_destroyCooldownTimer > 0f || _board == null) return;
+
+        Vector2Int myPos = Vector2Int.RoundToInt(
+            (Vector2)transform.position - (Vector2)_board.transform.position);
+
+        foreach (var dir in new[] { new Vector2Int(_facingDir, 0), new Vector2Int(-_facingDir, 0) })
+        {
+            Vector2Int target = myPos + dir;
+            if (_board.IsInBounds(target) && _board.IsOccupied(target))
+            {
+                if (GameManager.LocalDebug)
+                    RpcDestroyBlock(target.x, target.y);
+                else
+                    photonView.RPC(nameof(RpcDestroyBlock), RpcTarget.All, target.x, target.y);
+                _destroyCooldownTimer = _destroyCooldown;
+                return;
+            }
+        }
+    }
+
+    private void TryDestroyDown()
+    {
+        if (_visual != null) { _visual.DOKill(); _visual.localScale = Vector3.one; }
+        _animator?.SetTrigger("DestroyDown");
+        if (_destroyCooldownTimer > 0f || _board == null) return;
+
+        Vector2Int myPos = Vector2Int.RoundToInt(
+            (Vector2)transform.position - (Vector2)_board.transform.position);
+
+        Vector2Int target = myPos + Vector2Int.down;
+        if (_board.IsInBounds(target) && _board.IsOccupied(target))
+        {
+            if (GameManager.LocalDebug)
+                RpcDestroyBlock(target.x, target.y);
+            else
+                photonView.RPC(nameof(RpcDestroyBlock), RpcTarget.All, target.x, target.y);
+            _destroyCooldownTimer = _destroyCooldown;
+        }
+    }
+
+    [PunRPC]
+    private void RpcDestroyBlock(int x, int y)
+    {
+        _board?.DestroyAt(new Vector2Int(x, y));
     }
 
     [PunRPC]
@@ -170,9 +254,11 @@ public class Character : MonoBehaviourPun
     [PunRPC]
     private void RpcDie()
     {
+        CancelInvoke(nameof(StopPushAnim));
         _animator?.SetBool("IsDead", true);
-        Camera.main?.transform.DOShakePosition(0.5f, 1f, 20, 90, false, true);
-        gameObject.SetActive(false);
+        _camera?.transform.DOShakePosition(0.5f, 1f, 20, 90, false, true);
+        enabled = false;
+        _rb.isKinematic = true;
         GameManager.Instance?.GameOver();
     }
 }
