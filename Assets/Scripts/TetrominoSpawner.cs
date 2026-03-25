@@ -21,9 +21,7 @@ public class TetrominoSpawner : MonoBehaviour
 
     private static TetrominoType PickRandom()
     {
-        return Random.value < 0.15f
-            ? TetrominoType.Bomb
-            : (TetrominoType)Random.Range(0, 7);
+        return (TetrominoType)Random.Range(0, 7);
     }
 
     // Продвигает очередь без спауна тетромино (для BombNPC)

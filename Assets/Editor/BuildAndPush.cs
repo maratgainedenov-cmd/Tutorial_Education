@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -14,16 +11,15 @@ using Debug = UnityEngine.Debug;
 public class ChangelogWindow : EditorWindow
 {
     private string _text = "";
-    private bool _doGit = true;
-    private Action<string, bool> _onConfirm;
+    private Action<string> _onConfirm;
 
-    public static void Show(string title, Action<string, bool> onConfirm)
+    public static void Show(string title, Action<string> onConfirm)
     {
         var w = GetWindow<ChangelogWindow>(true, title, true);
         w._onConfirm = onConfirm;
         w._text = "";
-        w.minSize = new Vector2(440, 210);
-        w.maxSize = new Vector2(440, 210);
+        w.minSize = new Vector2(440, 190);
+        w.maxSize = new Vector2(440, 190);
     }
 
     void OnGUI()
@@ -31,10 +27,10 @@ public class ChangelogWindow : EditorWindow
         GUILayout.Label("Что изменилось в этой версии?", EditorStyles.boldLabel);
         _text = EditorGUILayout.TextArea(_text, GUILayout.Height(100));
         GUILayout.Space(6);
-        _doGit = GUILayout.Toggle(_doGit, "Git commit");
-        GUILayout.Space(6);
+        EditorGUILayout.HelpBox("После билда сделай git push — хук сам запушит на itch.io", MessageType.Info);
+        GUILayout.Space(4);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Build & Push")) { _onConfirm?.Invoke(_text, _doGit); Close(); }
+        if (GUILayout.Button("Build")) { _onConfirm?.Invoke(_text); Close(); }
         if (GUILayout.Button("Отмена")) Close();
         GUILayout.EndHorizontal();
     }
@@ -53,51 +49,29 @@ public static class BuildAndPush
 
     // ── Меню ─────────────────────────────────────────────────────────────────
 
-    [MenuItem("Tools/Build & Push/Windows + WebGL")]
+    [MenuItem("Tools/Build/Windows + WebGL")]
     static void AllPlatforms() => OpenDialog(true, true);
 
-    [MenuItem("Tools/Build & Push/Windows only")]
+    [MenuItem("Tools/Build/Windows only")]
     static void WindowsOnly() => OpenDialog(true, false);
 
-    [MenuItem("Tools/Build & Push/WebGL only")]
+    [MenuItem("Tools/Build/WebGL only")]
     static void WebGLOnly() => OpenDialog(false, true);
-
-    [MenuItem("Tools/Build & Push/Push without rebuild")]
-    static void PushOnly()
-    {
-        string winDir  = AbsDir(WIN_EXE);
-        string webDir  = Path.GetFullPath(WEBGL);
-        bool   hasWin  = Directory.Exists(winDir)  && Directory.GetFiles(winDir).Length > 0;
-        bool   hasWeb  = Directory.Exists(webDir)  && Directory.GetFiles(webDir).Length > 0;
-
-        if (!hasWin && !hasWeb)
-        {
-            Debug.LogError("[Build] Нет готовых билдов. Сначала сделай Windows only или Windows + WebGL.");
-            return;
-        }
-
-        if (hasWin) RunButler($"push \"{winDir}\" {GAME}:windows");
-        if (hasWeb) RunButler($"push \"{webDir}\" {GAME}:html5");
-    }
 
     // ── Диалог ───────────────────────────────────────────────────────────────
 
     static void OpenDialog(bool win, bool web)
     {
-        ChangelogWindow.Show("Build & Push — itch.io", (changelog, doGit) =>
+        ChangelogWindow.Show("Build", changelog =>
         {
             string version = BumpVersion();
             Debug.Log($"[Build] Версия: {version}");
 
-            if (doGit) GitCommit(changelog, version);
-
             if (win && !DoBuild(true,  version)) return;
             if (web && !DoBuild(false, version)) return;
 
-            if (win) RunButler($"push \"{AbsDir(WIN_EXE)}\" {GAME}:windows --userversion {version}");
-            if (web) RunButler($"push \"{Path.GetFullPath(WEBGL)}\" {GAME}:html5 --userversion {version}");
-
             AppendChangelog(changelog, version);
+            Debug.Log("[Build] Готово! Теперь git push → хук сам запушит на itch.io");
         });
     }
 
@@ -118,96 +92,6 @@ public static class BuildAndPush
         if (ok) Debug.Log($"[Build] {name} OK — v{version}");
         else    Debug.LogError($"[Build] {name} FAILED");
         return ok;
-    }
-
-    // ── Butler с прогресс-баром ───────────────────────────────────────────────
-
-    static void RunButler(string args)
-    {
-        EditorUtility.DisplayProgressBar("Pushing to itch.io", "Загружаем...", 0.1f);
-        try
-        {
-            var output = new StringBuilder();
-            float progress = 0.1f;
-
-            var p = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName               = BUTLER,
-                    Arguments              = args,
-                    UseShellExecute        = false,
-                    CreateNoWindow         = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError  = true
-                }
-            };
-
-            p.OutputDataReceived += (_, e) =>
-            {
-                if (e.Data == null) return;
-                output.AppendLine(e.Data);
-                var m = Regex.Match(e.Data, @"(\d+(?:\.\d+)?)\s*%");
-                if (m.Success && float.TryParse(m.Groups[1].Value,
-                    System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out float pct))
-                    progress = Mathf.Clamp01(pct / 100f);
-            };
-            p.ErrorDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
-
-            p.Start();
-            p.BeginOutputReadLine();
-            p.BeginErrorReadLine();
-
-            while (!p.WaitForExit(400))
-                EditorUtility.DisplayProgressBar("Pushing to itch.io", "Загружаем...", progress);
-
-            EditorUtility.ClearProgressBar();
-
-            if (p.ExitCode == 0)
-                Debug.Log("[Butler] Push OK\n" + output);
-            else
-                Debug.LogError("[Butler] Push FAILED\n" + output);
-        }
-        catch (Exception ex)
-        {
-            EditorUtility.ClearProgressBar();
-            Debug.LogError("[Butler] Ошибка: " + ex.Message);
-        }
-    }
-
-    // ── Git ───────────────────────────────────────────────────────────────────
-
-    static void GitCommit(string changelog, string version)
-    {
-        Git("add -A");
-        string msg = string.IsNullOrWhiteSpace(changelog)
-            ? $"Build {version}"
-            : $"Build {version}: {changelog.Split('\n')[0].Trim()}";
-        Git($"commit -m \"{msg}\"");
-    }
-
-    static void Git(string args)
-    {
-        var p = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName               = "git",
-                Arguments              = args,
-                UseShellExecute        = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError  = true,
-                CreateNoWindow         = true,
-                WorkingDirectory       = Directory.GetCurrentDirectory()
-            }
-        };
-        p.Start();
-        string o = p.StandardOutput.ReadToEnd();
-        string e = p.StandardError.ReadToEnd();
-        p.WaitForExit();
-        if (!string.IsNullOrEmpty(o)) Debug.Log($"[git] {args}: {o.Trim()}");
-        if (!string.IsNullOrEmpty(e) && p.ExitCode != 0) Debug.LogWarning($"[git] {args}: {e.Trim()}");
     }
 
     // ── Версия ────────────────────────────────────────────────────────────────
@@ -245,6 +129,4 @@ public static class BuildAndPush
         return list.ToArray();
     }
 
-    static string AbsDir(string exePath) =>
-        Path.GetFullPath(Path.GetDirectoryName(exePath));
 }

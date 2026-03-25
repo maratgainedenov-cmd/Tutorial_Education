@@ -7,8 +7,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [SerializeField] private GameObject _startPanel;
-    [SerializeField] private GameObject _resultPanel;   // одна панель для победы и поражения
-    [SerializeField] private TMP_Text   _resultText;    // текст внутри панели
+    [SerializeField] private VictoryPanel _victoryPanel;
     [SerializeField] private GameObject _pausePanel;
     [SerializeField] private TetrisController _tetrisController;
     [SerializeField] private CharacterSpawner _characterSpawner;
@@ -25,7 +24,6 @@ public class GameManager : MonoBehaviour
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         LocalDebug = _localDebugMode;
-        _resultPanel?.SetActive(false);
         _pausePanel?.SetActive(false);
         _startPanel?.SetActive(true);
         Time.timeScale = 1f;
@@ -42,6 +40,7 @@ public class GameManager : MonoBehaviour
         _startPanel?.SetActive(false);
         _isPlaying = true;
         Time.timeScale = 1f;
+        GameHUD.Instance?.StartTimer();
         _tetrisController?.StartGame();
         if (LocalDebug || !Photon.Pun.PhotonNetwork.IsMasterClient)
             _characterSpawner?.StartGame();
@@ -51,21 +50,18 @@ public class GameManager : MonoBehaviour
     {
         if (!_isPlaying) return;
         _isPlaying = false;
-        ShowResult("Тетрис победил!");
+        Time.timeScale = 0f;
+        GameHUD.Instance?.StopTimer();
+        _victoryPanel?.ShowP1Wins();
     }
 
     public void Win()
     {
         if (!_isPlaying) return;
         _isPlaying = false;
-        ShowResult("Персонаж победил!");
-    }
-
-    private void ShowResult(string message)
-    {
-        if (_resultText != null) _resultText.text = message;
-        _resultPanel?.SetActive(true);
         Time.timeScale = 0f;
+        GameHUD.Instance?.StopTimer();
+        _victoryPanel?.ShowP2Wins();
     }
 
     public void TogglePause()

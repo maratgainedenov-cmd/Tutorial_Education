@@ -25,11 +25,20 @@ public class Character : MonoBehaviourPun
     [Header("Destroy Block")]
     [SerializeField] private KeyCode _destroySideKey = KeyCode.X;
     [SerializeField] private KeyCode _destroyDownKey = KeyCode.Z;
-    [SerializeField] private float _destroyCooldown = 5f;
-    private float _destroyCooldownTimer = 0f;
+    [SerializeField] private float _destroySideCooldown = 5f;
+    [SerializeField] private float _destroyDownCooldown = 5f;
+    [SerializeField] private float _pushCooldown        = 1f;
+    private float _destroySideTimer = 0f;
+    private float _destroyDownTimer = 0f;
+    private float _pushTimer        = 0f;
+    private bool _pendingDestroyDown = false;
 
-    public float DestroyCooldownNormalized => _destroyCooldown > 0f ? Mathf.Clamp01(1f - _destroyCooldownTimer / _destroyCooldown) : 1f;
-    public bool IsDestroyReady => _destroyCooldownTimer <= 0f;
+    public float DestroyCooldownNormalized     => _destroySideCooldown > 0f ? Mathf.Clamp01(1f - _destroySideTimer / _destroySideCooldown) : 1f;
+    public float DestroyDownCooldownNormalized => _destroyDownCooldown > 0f ? Mathf.Clamp01(1f - _destroyDownTimer / _destroyDownCooldown) : 1f;
+    public float PushCooldownNormalized        => _pushCooldown > 0f        ? Mathf.Clamp01(1f - _pushTimer / _pushCooldown) : 1f;
+    public bool  IsDestroyReady     => _destroySideTimer <= 0f;
+    public bool  IsDestroyDownReady => _destroyDownTimer <= 0f;
+    public bool  IsPushReady        => _pushTimer        <= 0f;
 
     [Header("Juice")]
     [SerializeField] private Transform _visual;
@@ -38,6 +47,7 @@ public class Character : MonoBehaviourPun
     private Rigidbody2D _rb;
     private Camera _camera;
     private bool _isGrounded;
+    private readonly Collider2D[] _pushBuffer = new Collider2D[8];
     private bool _wasGrounded;
     private bool _isWallSliding;
     private bool _isTouchingLeftWall;
@@ -104,16 +114,26 @@ public class Character : MonoBehaviourPun
         _animator?.SetFloat("Speed", Mathf.Abs(_rb.velocity.x));
         UpdateFacingLine();
 
-        // Push
-        if (Input.GetKeyDown(KeyCode.Keypad0) || Input.GetKeyDown(KeyCode.Insert))
-            TryPush();
+        // Push — анимация запускается сразу, логика — через Animation Event в конце клипа
+        _pushTimer -= Time.deltaTime;
+        if ((Input.GetKeyDown(KeyCode.Keypad0) || Input.GetKeyDown(KeyCode.Insert)) && _pushTimer <= 0f)
+        {
+            _animator?.SetBool("IsPushing", true);
+            Invoke(nameof(StopPushAnim), 1.2f);
+        }
 
-        // Destroy block
-        _destroyCooldownTimer -= Time.deltaTime;
-        if (Input.GetKeyDown(_destroySideKey))
-            TryDestroySide();
-        if (Input.GetKeyDown(_destroyDownKey))
-            TryDestroyDown();
+        // Destroy block — анимация запускается при нажатии, логика — через Animation Event
+        _destroySideTimer -= Time.deltaTime;
+        _destroyDownTimer -= Time.deltaTime;
+        if (Input.GetKeyDown(_destroySideKey) && _destroySideTimer <= 0f)
+        {
+            _animator?.SetTrigger("Destroy");
+        }
+        if (Input.GetKeyDown(_destroyDownKey) && _destroyDownTimer <= 0f)
+        {
+            _pendingDestroyDown = true;
+            _animator?.SetTrigger("DestroyDown");
+        }
 
         // Jump
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.Space))
@@ -144,19 +164,18 @@ public class Character : MonoBehaviourPun
         _facingLine.SetPosition(1, end);
     }
 
-    private void TryPush()
+    /// <summary>Вызывается через Animation Event в конце анимации толчка.</summary>
+    public void TryPush()
     {
-        _visual?.DOPunchScale(new Vector3(0.2f, -0.15f, 0) * _facingDir, 0.15f, 5, 0.5f);
-        _animator?.SetBool("IsPushing", true);
-        Invoke(nameof(StopPushAnim), 0.4f);
+        _pushTimer = _pushCooldown;
 
         // Пробуем толкнуть BombNPC — ищем в зоне перед персонажем
         Vector2 checkPos = (Vector2)transform.position + Vector2.right * _facingDir * 0.9f;
-        var cols = Physics2D.OverlapCircleAll(checkPos, 0.6f);
-        foreach (var col in cols)
+        int count = Physics2D.OverlapCircleNonAlloc(checkPos, 0.6f, _pushBuffer);
+        for (int i = 0; i < count; i++)
         {
-            var npc = col.GetComponent<BombNPC>()
-                   ?? col.GetComponentInParent<BombNPC>();
+            var npc = _pushBuffer[i].GetComponent<BombNPC>()
+                   ?? _pushBuffer[i].GetComponentInParent<BombNPC>();
             if (npc != null)
             {
                 npc.Push(new Vector2(_facingDir, 0.5f));
@@ -177,11 +196,11 @@ public class Character : MonoBehaviourPun
                 pushPos.x, pushPos.y, pushDir.x, pushDir.y);
     }
 
-    private void TryDestroySide()
+    /// <summary>Вызывается через Animation Event в конце анимации удара сбоку (X).</summary>
+    public void TryDestroySide()
     {
-        if (_visual != null) { _visual.DOKill(); _visual.localScale = Vector3.one; }
-        _animator?.SetTrigger("Destroy");
-        if (_destroyCooldownTimer > 0f || _board == null) return;
+        if (_visual != null) { _visual.DOKill(); _visual.localScale = new Vector3(_facingDir, 1f, 1f); }
+        if (_destroySideTimer > 0f || _board == null) return;
 
         Vector2Int myPos = Vector2Int.RoundToInt(
             (Vector2)transform.position - (Vector2)_board.transform.position);
@@ -195,17 +214,19 @@ public class Character : MonoBehaviourPun
                     RpcDestroyBlock(target.x, target.y);
                 else
                     photonView.RPC(nameof(RpcDestroyBlock), RpcTarget.All, target.x, target.y);
-                _destroyCooldownTimer = _destroyCooldown;
+                _destroySideTimer = _destroySideCooldown;
                 return;
             }
         }
     }
 
-    private void TryDestroyDown()
+    /// <summary>Вызывается через Animation Event в конце анимации удара вниз (Z).</summary>
+    public void TryDestroyDown()
     {
-        if (_visual != null) { _visual.DOKill(); _visual.localScale = Vector3.one; }
-        _animator?.SetTrigger("DestroyDown");
-        if (_destroyCooldownTimer > 0f || _board == null) return;
+        if (!_pendingDestroyDown) return;
+        _pendingDestroyDown = false;
+        if (_visual != null) { _visual.DOKill(); _visual.localScale = new Vector3(_facingDir, 1f, 1f); }
+        if (_destroyDownTimer > 0f || _board == null) return;
 
         Vector2Int myPos = Vector2Int.RoundToInt(
             (Vector2)transform.position - (Vector2)_board.transform.position);
@@ -217,7 +238,7 @@ public class Character : MonoBehaviourPun
                 RpcDestroyBlock(target.x, target.y);
             else
                 photonView.RPC(nameof(RpcDestroyBlock), RpcTarget.All, target.x, target.y);
-            _destroyCooldownTimer = _destroyCooldown;
+            _destroyDownTimer = _destroyDownCooldown;
         }
     }
 

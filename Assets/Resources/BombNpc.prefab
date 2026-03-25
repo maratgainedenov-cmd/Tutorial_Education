@@ -78,7 +78,7 @@ MonoBehaviour:
   _jumpForce: 8
   _solidLayer:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 4294967295
   _obstacleCheckDist: 0.6
   _jumpCooldown: 0.6
   _explodeDistance: 1
@@ -89,6 +89,7 @@ MonoBehaviour:
   _visual: {fileID: 169080977018678829}
   _animator: {fileID: 4710490099809880765}
   _spriteRenderer: {fileID: 5778375002170659852}
+  _animatorController: {fileID: 9100000, guid: 90e40b26d91fad6459e809efe6a9e540, type: 2}
 --- !u!58 &7600160788438924028
 CircleCollider2D:
   m_ObjectHideFlags: 0

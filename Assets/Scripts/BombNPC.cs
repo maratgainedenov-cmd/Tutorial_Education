@@ -25,9 +25,10 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
     [SerializeField] private float _pushForce = 8f;
 
     [Header("Visual")]
-    [SerializeField] private Transform      _visual;
-    [SerializeField] private Animator       _animator;
-    [SerializeField] private SpriteRenderer _spriteRenderer;
+    [SerializeField] private Transform                _visual;
+    [SerializeField] private Animator                 _animator;
+    [SerializeField] private SpriteRenderer           _spriteRenderer;
+    [SerializeField] private RuntimeAnimatorController _animatorController;
 
     public event Action OnDied;
 
@@ -38,6 +39,8 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
     private bool        _isGrounded;
     private float       _jumpTimer;
     private float       _moveDir;
+
+    private bool IsMine => GameManager.LocalDebug || (photonView != null && photonView.IsMine);
 
     // Приземление
     private bool _isLanded;
@@ -51,6 +54,7 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
     private bool  _fuseActive;
     private float _fuseTimer;
     private Tween _pulseTween;
+    private float _fuseLockTimer; // задержка перед первой проверкой дистанции
 
     private void Awake()
     {
@@ -61,13 +65,16 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
         if (_animator       == null) _animator       = GetComponentInChildren<Animator>();
         if (_spriteRenderer == null) _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
+        if (_animator != null && _animator.runtimeAnimatorController == null && _animatorController != null)
+            _animator.runtimeAnimatorController = _animatorController;
+
         // Вычисляем колонку по позиции спавна
         if (_board != null)
             _landingGridX = Mathf.RoundToInt(
                 _board.transform.InverseTransformPoint(transform.position).x);
 
         // Ghost только у мастера (он один кидает бомбу)
-        if (photonView.IsMine || GameManager.LocalDebug)
+        if (IsMine)
             CreateGhost();
     }
 
@@ -88,7 +95,7 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
 
     private void Start()
     {
-        if (photonView.IsMine || GameManager.LocalDebug)
+        if (IsMine)
             _rb.AddForce(Vector2.up * 4f, ForceMode2D.Impulse);
 
         if (_visual != null)
@@ -101,8 +108,11 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
     private void Update()
     {
         // Только мастер управляет AI и физикой
-        if (!photonView.IsMine && !GameManager.LocalDebug) return;
+        if (!IsMine) return;
         if (_exploded) return;
+
+        // ── Обновляем землю всегда (нужно для анимации) ───────────────
+        CheckGround();
 
         // ── Фаза падения ──────────────────────────────────────────────
         if (!_isLanded)
@@ -115,11 +125,11 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
         if (_target == null) return;
 
         _jumpTimer -= Time.deltaTime;
-        CheckGround();
+        if (_fuseLockTimer > 0f) _fuseLockTimer -= Time.deltaTime;
 
         float dist = Vector2.Distance(transform.position, _target.position);
 
-        if (!_fuseActive && dist <= _explodeDistance)
+        if (!_fuseActive && _fuseLockTimer <= 0f && dist <= _explodeDistance)
             StartFuse();
 
         if (_fuseActive)
@@ -146,7 +156,7 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
     // Определяем приземление по физическому контакту (только мастер)
     private void OnCollisionEnter2D(Collision2D col)
     {
-        if (!photonView.IsMine && !GameManager.LocalDebug) return;
+        if (!IsMine) return;
         if (_isLanded || _exploded) return;
 
         foreach (var contact in col.contacts)
@@ -188,7 +198,8 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
 
     private void OnLanded()
     {
-        _isLanded = true;
+        _isLanded     = true;
+        _fuseLockTimer = 0.5f; // 0.5 сек нельзя начинать fuse
 
         if (_ghostObject != null) Destroy(_ghostObject);
 
@@ -205,7 +216,8 @@ public class BombNPC : MonoBehaviourPun, IPunObservable
             (Vector2)transform.position + Vector2.down * 0.6f,
             new Vector2(0.7f, 0.1f), 0f, mask);
 
-        _animator?.SetBool("IsGrounded", _isGrounded);
+        if (_animator != null && _animator.runtimeAnimatorController != null)
+            _animator.SetBool("IsGrounded", _isGrounded);
     }
 
     private bool HasObstacleAhead()

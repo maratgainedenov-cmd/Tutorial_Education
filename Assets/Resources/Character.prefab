@@ -330,6 +330,7 @@ GameObject:
   - component: {fileID: 3744303768195138034}
   - component: {fileID: 2994771586352495431}
   - component: {fileID: 6306750064333132536}
+  - component: {fileID: 5824895972916283744}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -455,9 +456,24 @@ MonoBehaviour:
   - Type: 4
     SynchronizeType: 1
     Name: IsWallSliding
-  - Type: 4
+  - Type: 9
     SynchronizeType: 0
-    Name: IsDestroying
+    Name: Destroy
+  - Type: 9
+    SynchronizeType: 0
+    Name: DestroyDown
   m_SynchronizeLayers:
   - SynchronizeType: 0
     LayerIndex: 0
+--- !u!114 &5824895972916283744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4775228453570229697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f83ae5a5cd27c441835ddfa9188af9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

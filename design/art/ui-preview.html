@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<title>Tetris vs Character — UI Design System</title>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* ── COLOR TOKENS ── */
+  :root {
+    --color-board-bg:        #0A0A14;
+    --color-board-grid:      #1A1A2E;
+    --color-ui-bg-dark:      #12121F;
+    --color-ui-bg-mid:       #1E1E35;
+    --color-ui-border:       #2A2A4A;
+    --color-text-primary:    #E8E8F0;
+    --color-text-secondary:  #8888AA;
+    --color-text-disabled:   #444460;
+    --color-p1-primary:      #4A9EFF;
+    --color-p1-glow:         rgba(74,158,255,0.25);
+    --color-p2-primary:      #FF7A3D;
+    --color-p2-glow:         rgba(255,122,61,0.25);
+    --color-state-success:   #40D080;
+    --color-state-danger:    #FF3A3A;
+    --color-state-warning:   #FFB020;
+    --color-state-cooldown:  #6060AA;
+    --color-state-ready:     #80FFB0;
+  }
+
+  body {
+    background: #070710;
+    font-family: 'Exo 2', sans-serif;
+    color: var(--color-text-primary);
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--color-text-disabled);
+    padding: 40px 40px 16px;
+  }
+
+  /* ════════════════════════════════════════
+     FRAME 1 — COLOR SYSTEM
+  ════════════════════════════════════════ */
+  .frame-colors {
+    width: 1920px;
+    background: var(--color-board-bg);
+    padding: 40px;
+  }
+  .color-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .color-chip {
+    display: flex;
+    flex-direction: column;
+    width: 160px;
+  }
+  .color-chip .swatch {
+    height: 64px;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .color-chip .meta {
+    background: var(--color-ui-bg-mid);
+    border: 1px solid var(--color-ui-border);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 8px 10px;
+  }
+  .color-chip .token { font-size: 10px; color: var(--color-text-secondary); }
+  .color-chip .hex   { font-size: 12px; font-weight: 600; color: var(--color-text-primary); }
+  .color-section-title {
+    font-size: 13px; font-weight: 600; color: var(--color-text-secondary);
+    margin: 24px 0 8px; letter-spacing: 1px;
+  }
+
+  /* ════════════════════════════════════════
+     FRAME 2 — TYPOGRAPHY
+  ════════════════════════════════════════ */
+  .frame-typography {
+    width: 1920px;
+    background: var(--color-board-bg);
+    padding: 40px;
+    margin-top: 2px;
+  }
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-ui-border);
+  }
+  .type-meta { width: 200px; flex-shrink: 0; }
+  .type-meta .role { font-size: 12px; color: var(--color-text-secondary); }
+  .type-meta .spec { font-size: 11px; color: var(--color-text-disabled); margin-top: 2px; }
+  .type-sample { color: var(--color-text-primary); }
+  .type-sample.xl   { font-size: 72px; font-weight: 700; line-height: 1; }
+  .type-sample.lg   { font-size: 48px; font-weight: 700; line-height: 1; }
+  .type-sample.md   { font-size: 32px; font-weight: 600; }
+  .type-sample.sm   { font-size: 24px; font-weight: 400; }
+  .type-sample.xs   { font-size: 18px; font-weight: 400; }
+
+  /* ════════════════════════════════════════
+     FRAME 3 — COMPONENTS
+  ════════════════════════════════════════ */
+  .frame-components {
+    width: 1920px;
+    background: var(--color-board-bg);
+    padding: 40px;
+    margin-top: 2px;
+  }
+  .comp-row { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; margin-top: 16px; }
+
+  /* Panel */
+  .panel {
+    background: rgba(18,18,31,0.92);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .panel.p1::before { background: var(--color-p1-primary); }
+  .panel.p2::before { background: var(--color-p2-primary); }
+  .panel.success::before { background: var(--color-state-success); }
+  .panel.danger::before  { background: var(--color-state-danger); }
+  .panel-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 8px;
+  }
+  .panel-menu {
+    background: var(--color-ui-bg-mid);
+    border: 1px solid var(--color-p1-primary);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel-menu::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--color-p1-primary);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 240px; height: 48px;
+    border-radius: 4px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: rgba(74,158,255,0.15);
+    border: 1px solid var(--color-p1-primary);
+    color: var(--color-text-primary);
+  }
+  .btn-primary-hover {
+    background: rgba(74,158,255,0.30);
+    border: 1px solid #7DBFFF;
+    color: var(--color-text-primary);
+    transform: scale(1.05);
+  }
+  .btn-primary-press {
+    background: rgba(74,158,255,0.50);
+    border: 1px solid var(--color-p1-primary);
+    color: var(--color-text-primary);
+    transform: scale(0.95);
+  }
+  .btn-primary-disabled {
+    background: rgba(74,158,255,0.06);
+    border: 1px solid rgba(74,158,255,0.4);
+    color: rgba(232,232,240,0.4);
+    cursor: not-allowed;
+  }
+  .btn-danger {
+    background: rgba(255,58,58,0.15);
+    border: 1px solid var(--color-state-danger);
+    color: var(--color-text-primary);
+  }
+
+  /* Icon placeholder */
+  .icon {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .icon-ready    { background: rgba(128,255,176,0.12); border: 1px solid var(--color-state-ready); color: var(--color-state-ready); }
+  .icon-cooldown { background: rgba(96,96,170,0.18); border: 1px solid var(--color-state-cooldown); color: var(--color-state-cooldown); }
+  .icon-disabled { background: rgba(68,68,96,0.2); border: 1px solid var(--color-text-disabled); color: var(--color-text-disabled); }
+  .icon-success  { background: rgba(64,208,128,0.12); border: 1px solid var(--color-state-success); color: var(--color-state-success); }
+  .icon-danger   { background: rgba(255,58,58,0.12); border: 1px solid var(--color-state-danger); color: var(--color-state-danger); }
+
+  /* Radial cooldown mock */
+  .cooldown-ring {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: conic-gradient(var(--color-p2-primary) 0% 60%, rgba(96,96,170,0.3) 60% 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .cooldown-ring::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: var(--color-ui-bg-dark);
+  }
+  .cooldown-ring span {
+    position: relative; z-index: 1;
+    font-size: 12px; font-weight: 700;
+    color: var(--color-p2-primary);
+  }
+
+  /* Tetromino colors */
+  .tetro-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .tetro-chip {
+    width: 72px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .tetro-block {
+    width: 48px; height: 48px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .tetro-label { font-size: 11px; color: var(--color-text-secondary); }
+
+  /* ════════════════════════════════════════
+     FRAME 4 — GAME LAYOUT (1920×1080)
+  ════════════════════════════════════════ */
+  .frame-game {
+    width: 1920px;
+    height: 1080px;
+    background: var(--color-board-bg);
+    display: grid;
+    grid-template-rows: 86px 1fr 108px;
+    grid-template-columns: 384px 1fr 384px;
+    position: relative;
+    margin-top: 2px;
+    overflow: hidden;
+  }
+
+  /* Grid lines overlay */
+  .frame-game::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(26,26,46,0.4) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,26,46,0.4) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+  }
+
+  /* ── HEADER ── */
+  .game-header {
+    grid-column: 1 / 4;
+    grid-row: 1;
+    background: rgba(18,18,31,0.95);
+    border-bottom: 1px solid var(--color-ui-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    z-index: 10;
+  }
+  .score-block { display: flex; flex-direction: column; }
+  .score-block .player-label { font-size: 13px; font-weight: 600; letter-spacing: 2px; }
+  .score-block .score-value  { font-size: 36px; font-weight: 700; line-height: 1; }
+  .score-p1 .player-label { color: var(--color-p1-primary); }
+  .score-p2 .player-label { color: var(--color-p2-primary); }
+  .score-p2 { text-align: right; }
+  .timer-block {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .timer-label { font-size: 11px; letter-spacing: 2px; color: var(--color-text-disabled); }
+  .timer-value { font-size: 32px; font-weight: 700; color: var(--color-text-primary); }
+
+  /* ── LEFT PANEL (P1 HUD) ── */
+  .game-left {
+    grid-column: 1;
+    grid-row: 2;
+    background: rgba(18,18,31,0.85);
+    border-right: 1px solid var(--color-ui-border);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 10;
+  }
+
+  /* Next Piece Preview */
+  .preview-panel {
+    background: rgba(18,18,31,0.92);
+    border: 1px solid var(--color-p1-primary);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 16px rgba(74,158,255,0.15);
+  }
+  .preview-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--color-p1-primary);
+  }
+  .preview-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 3px;
+    color: var(--color-text-secondary); margin-bottom: 10px;
+  }
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    aspect-ratio: 1;
+    max-width: 140px;
+    margin: 0 auto;
+  }
+  .preview-cell { aspect-ratio: 1; border-radius: 2px; }
+  .preview-cell.filled-T { background: #A000F0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .preview-cell.empty    { background: rgba(26,26,46,0.6); }
+
+  /* BombNPC control */
+  .bomb-panel {
+    background: rgba(18,18,31,0.92);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bomb-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--color-p1-primary);
+  }
+  .bomb-row { display: flex; align-items: center; gap: 12px; }
+  .bomb-info .bomb-label { font-size: 10px; letter-spacing: 2px; color: var(--color-text-secondary); }
+  .bomb-info .bomb-status { font-size: 13px; font-weight: 600; color: var(--color-state-ready); margin-top: 2px; }
+
+  /* Stats panel */
+  .stats-panel {
+    background: rgba(18,18,31,0.92);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative; overflow: hidden;
+  }
+  .stats-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--color-p1-primary);
+  }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+  .stat-label { font-size: 11px; color: var(--color-text-secondary); letter-spacing: 1px; }
+  .stat-value { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+
+  /* ── CENTER (GAME BOARD) ── */
+  .game-board {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 5;
+  }
+  .tetris-board {
+    width: 480px;
+    height: 960px;
+    background: rgba(10,10,20,0.95);
+    border: 1px solid rgba(42,42,74,0.8);
+    border-radius: 2px;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(20, 1fr);
+    gap: 1px;
+    padding: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .board-cell {
+    border-radius: 1px;
+    background: rgba(26,26,46,0.4);
+  }
+  .board-cell.block-I { background: #00F0F0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .board-cell.block-O { background: #F0F000; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .board-cell.block-T { background: #A000F0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .board-cell.block-S { background: #00F000; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .board-cell.block-Z { background: #F00000; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .board-cell.block-J { background: #0000F0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .board-cell.block-L { background: #F0A000; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  .board-cell.ghost   { background: rgba(160,0,240,0.25); border: 1px solid rgba(160,0,240,0.5); }
+  /* Character */
+  .character-sprite {
+    position: absolute;
+    width: 44px; height: 44px;
+    background: var(--color-p2-primary);
+    border-radius: 4px;
+    bottom: 140px;
+    left: 100px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 12px rgba(255,122,61,0.5);
+    z-index: 5;
+  }
+
+  /* ── RIGHT PANEL (P1 extra) ── */
+  .game-right {
+    grid-column: 3;
+    grid-row: 2;
+    background: rgba(18,18,31,0.85);
+    border-left: 1px solid var(--color-ui-border);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 10;
+  }
+  .controls-panel {
+    background: rgba(18,18,31,0.92);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative; overflow: hidden;
+  }
+  .controls-panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--color-p1-primary);
+  }
+  .control-hint {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(42,42,74,0.5);
+  }
+  .control-hint:last-child { border-bottom: none; }
+  .ctrl-key {
+    background: var(--color-ui-bg-mid);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 11px; font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+  .ctrl-desc { font-size: 11px; color: var(--color-text-secondary); }
+
+  /* Lines counter */
+  .lines-panel {
+    background: rgba(18,18,31,0.92);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative; overflow: hidden;
+    text-align: center;
+  }
+  .lines-panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--color-p1-primary);
+  }
+  .lines-num { font-size: 48px; font-weight: 700; color: var(--color-p1-primary); line-height: 1; }
+  .lines-lbl { font-size: 10px; letter-spacing: 3px; color: var(--color-text-secondary); margin-top: 4px; }
+
+  /* Level */
+  .level-panel {
+    background: rgba(18,18,31,0.92);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative; overflow: hidden;
+    text-align: center;
+  }
+  .level-panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--color-p1-primary);
+  }
+  .level-num { font-size: 36px; font-weight: 700; color: var(--color-text-primary); line-height: 1; }
+  .level-lbl { font-size: 10px; letter-spacing: 3px; color: var(--color-text-secondary); margin-top: 4px; }
+
+  /* ── FOOTER (P2 HUD) ── */
+  .game-footer {
+    grid-column: 1 / 4;
+    grid-row: 3;
+    background: rgba(18,18,31,0.95);
+    border-top: 1px solid var(--color-ui-border);
+    border-top: 2px solid rgba(255,122,61,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    gap: 24px;
+    z-index: 10;
+  }
+  .hud-section { display: flex; align-items: center; gap: 12px; }
+  .hud-label { font-size: 10px; letter-spacing: 2px; color: var(--color-text-secondary); margin-bottom: 3px; }
+
+  /* Push indicator */
+  .push-indicator {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .push-icon {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: rgba(68,68,96,0.2);
+    border: 1px solid var(--color-text-disabled);
+    color: var(--color-text-disabled);
+  }
+  .push-key { font-size: 10px; color: var(--color-text-disabled); letter-spacing: 1px; }
+
+  /* Cooldown indicators */
+  .cooldown-group { display: flex; align-items: center; gap: 16px; }
+  .cooldown-item  { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .cooldown-name  { font-size: 10px; letter-spacing: 1px; color: var(--color-text-secondary); text-align: center; }
+  .cd-divider {
+    width: 1px; height: 48px;
+    background: var(--color-ui-border);
+    margin: 0 4px;
+  }
+
+  /* Exit indicator */
+  .exit-indicator {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .exit-status-dot {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: rgba(64,208,128,0.1);
+    border: 1px solid var(--color-state-success);
+  }
+  .exit-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--color-state-success);
+    box-shadow: 0 0 6px var(--color-state-success);
+  }
+  .exit-text { font-size: 12px; font-weight: 600; color: var(--color-state-success); letter-spacing: 1px; }
+  .exit-icon  { font-size: 22px; }
+  .exit-key   { font-size: 10px; color: var(--color-text-disabled); letter-spacing: 1px; }
+
+  /* ════════════════════════════════════════
+     FRAME 5 — VICTORY OVERLAY
+  ════════════════════════════════════════ */
+  .frame-victory {
+    width: 1920px;
+    height: 1080px;
+    background: var(--color-board-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-top: 2px;
+    overflow: hidden;
+  }
+  .frame-victory::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,20,0.7);
+  }
+  .victory-card {
+    position: relative;
+    width: 480px;
+    background: rgba(18,18,31,0.96);
+    border: 1px solid var(--color-p2-primary);
+    border-radius: 4px;
+    padding: 48px;
+    text-align: center;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(255,122,61,0.2);
+    z-index: 1;
+  }
+  .victory-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: var(--color-p2-primary);
+  }
+  .victory-title {
+    font-size: 72px; font-weight: 700; line-height: 1;
+    color: var(--color-p2-primary);
+    margin-bottom: 8px;
+  }
+  .victory-sub {
+    font-size: 18px; font-weight: 600; letter-spacing: 3px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .victory-detail {
+    font-size: 16px; color: var(--color-text-secondary);
+    margin-bottom: 40px;
+    line-height: 1.5;
+  }
+  .victory-btns { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+  /* ════════════════════════════════════════
+     FRAME 6 — MENU SCREEN
+  ════════════════════════════════════════ */
+  .frame-menu {
+    width: 1920px;
+    height: 1080px;
+    background: var(--color-board-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: relative;
+    margin-top: 2px;
+    overflow: hidden;
+  }
+  /* Background art suggestion */
+  .frame-menu::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 50% 60%, rgba(74,158,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 30% 40%, rgba(255,122,61,0.04) 0%, transparent 50%);
+  }
+  /* Grid bg */
+  .frame-menu::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(26,26,46,0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,26,46,0.3) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .menu-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .menu-logo {
+    font-size: 72px; font-weight: 700; line-height: 1;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .menu-logo .p1-part { color: var(--color-p1-primary); }
+  .menu-logo .vs-part { color: var(--color-text-disabled); font-size: 40px; margin: 0 16px; }
+  .menu-logo .p2-part { color: var(--color-p2-primary); }
+  .menu-subtitle {
+    font-size: 14px; letter-spacing: 6px; text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 64px;
+  }
+  .menu-divider {
+    width: 320px; height: 1px;
+    background: var(--color-ui-border);
+    margin-bottom: 32px;
+  }
+  .menu-btns {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    margin-bottom: 32px;
+  }
+  .menu-divider-2 {
+    width: 200px; height: 1px;
+    background: var(--color-ui-border);
+    margin-bottom: 12px;
+  }
+  .menu-version {
+    font-size: 12px; color: var(--color-text-disabled); letter-spacing: 2px;
+  }
+
+  /* ════════════════════════════════════════
+     FRAME 7 — ASSET NAMING REFERENCE
+  ════════════════════════════════════════ */
+  .frame-assets {
+    width: 1920px;
+    background: var(--color-board-bg);
+    padding: 40px;
+    margin-top: 2px;
+  }
+  .asset-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .asset-card {
+    background: var(--color-ui-bg-dark);
+    border: 1px solid var(--color-ui-border);
+    border-radius: 4px;
+    padding: 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .asset-preview {
+    width: 64px; height: 64px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    background: var(--color-ui-bg-mid);
+    border: 1px dashed var(--color-ui-border);
+    color: var(--color-text-secondary);
+  }
+  .asset-name { font-size: 10px; color: var(--color-text-secondary); text-align: center; letter-spacing: 0.5px; word-break: break-all; }
+  .asset-size { font-size: 10px; color: var(--color-text-disabled); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  FRAME 1 — COLOR SYSTEM                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-label">01 — Color System</div>
+<div class="frame-colors">
+  <div class="color-section-title">Primary Background Palette</div>
+  <div class="color-grid">
+    <div class="color-chip"><div class="swatch" style="background:#0A0A14"></div><div class="meta"><div class="token">color-board-bg</div><div class="hex">#0A0A14</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#1A1A2E"></div><div class="meta"><div class="token">color-board-grid</div><div class="hex">#1A1A2E</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#12121F"></div><div class="meta"><div class="token">color-ui-bg-dark</div><div class="hex">#12121F</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#1E1E35"></div><div class="meta"><div class="token">color-ui-bg-mid</div><div class="hex">#1E1E35</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#2A2A4A"></div><div class="meta"><div class="token">color-ui-border</div><div class="hex">#2A2A4A</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#E8E8F0"></div><div class="meta"><div class="token">color-text-primary</div><div class="hex">#E8E8F0</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#8888AA"></div><div class="meta"><div class="token">color-text-secondary</div><div class="hex">#8888AA</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#444460"></div><div class="meta"><div class="token">color-text-disabled</div><div class="hex">#444460</div></div></div>
+  </div>
+
+  <div class="color-section-title">Player Identity Colors</div>
+  <div class="color-grid">
+    <div class="color-chip"><div class="swatch" style="background:#4A9EFF"></div><div class="meta"><div class="token">color-p1-primary</div><div class="hex">#4A9EFF</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:rgba(74,158,255,0.25)"></div><div class="meta"><div class="token">color-p1-glow</div><div class="hex">#4A9EFF 25%</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#FF7A3D"></div><div class="meta"><div class="token">color-p2-primary</div><div class="hex">#FF7A3D</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:rgba(255,122,61,0.25)"></div><div class="meta"><div class="token">color-p2-glow</div><div class="hex">#FF7A3D 25%</div></div></div>
+  </div>
+
+  <div class="color-section-title">State Colors</div>
+  <div class="color-grid">
+    <div class="color-chip"><div class="swatch" style="background:#40D080"></div><div class="meta"><div class="token">color-state-success</div><div class="hex">#40D080</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#FF3A3A"></div><div class="meta"><div class="token">color-state-danger</div><div class="hex">#FF3A3A</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#FFB020"></div><div class="meta"><div class="token">color-state-warning</div><div class="hex">#FFB020</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#6060AA"></div><div class="meta"><div class="token">color-state-cooldown</div><div class="hex">#6060AA</div></div></div>
+    <div class="color-chip"><div class="swatch" style="background:#80FFB0"></div><div class="meta"><div class="token">color-state-ready</div><div class="hex">#80FFB0</div></div></div>
+  </div>
+
+  <div class="color-section-title">Tetromino Colors (Tetris Guideline)</div>
+  <div class="tetro-grid">
+    <div class="tetro-chip"><div class="tetro-block" style="background:#00F0F0">I</div><div class="tetro-label">#00F0F0</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:#F0F000;color:#000">O</div><div class="tetro-label">#F0F000</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:#A000F0">T</div><div class="tetro-label">#A000F0</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:#00F000">S</div><div class="tetro-label">#00F000</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:#F00000">Z</div><div class="tetro-label">#F00000</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:#0000F0">J</div><div class="tetro-label">#0000F0</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:#F0A000">L</div><div class="tetro-label">#F0A000</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:rgba(160,0,240,0.4);border:1px solid rgba(160,0,240,0.6)">G</div><div class="tetro-label">Ghost T</div></div>
+    <div class="tetro-chip"><div class="tetro-block" style="background:#FF6600">B</div><div class="tetro-label">#FF6600 Bomb</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  FRAME 2 — TYPOGRAPHY                      -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-label">02 — Typography Scale (Exo 2)</div>
+<div class="frame-typography">
+  <div class="type-row">
+    <div class="type-meta"><div class="role">text-xl</div><div class="spec">72px · Bold 700</div><div class="spec">Match Result</div></div>
+    <div class="type-sample xl">ПОБЕДА!</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta"><div class="role">text-lg</div><div class="spec">48px · Bold 700</div><div class="spec">Score, Numbers</div></div>
+    <div class="type-sample lg">48 300</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta"><div class="role">text-md</div><div class="spec">32px · SemiBold 600</div><div class="spec">Panel Titles, Buttons</div></div>
+    <div class="type-sample md">СЛЕДУЮЩАЯ ФИГУРА</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta"><div class="role">text-sm</div><div class="spec">24px · Regular 400</div><div class="spec">Labels, Cooldown Status</div></div>
+    <div class="type-sample sm">Cooldown готов · Выход открыт</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta"><div class="role">text-xs</div><div class="spec">18px · Regular 400</div><div class="spec">Captions, Version</div></div>
+    <div class="type-sample xs">v0.3.0 · Нажмите для начала · NEXT · УРОВЕНЬ</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  FRAME 3 — COMPONENTS                      -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-label">03 — Components</div>
+<div class="frame-components">
+
+  <!-- Panels -->
+  <div class="color-section-title">Panel Variants</div>
+  <div class="comp-row">
+    <div>
+      <div class="type-meta" style="margin-bottom:8px"><div class="role" style="font-size:12px;color:var(--color-text-secondary)">panel-primary (P1)</div></div>
+      <div class="panel p1" style="width:200px">
+        <div class="panel-title">СЛЕДУЮЩАЯ</div>
+        <div style="font-size:13px;color:var(--color-text-primary)">Панель Player 1</div>
+      </div>
+    </div>
+    <div>
+      <div class="type-meta" style="margin-bottom:8px"><div class="role" style="font-size:12px;color:var(--color-text-secondary)">panel-primary (P2)</div></div>
+      <div class="panel p2" style="width:200px">
+        <div class="panel-title">COOLDOWN</div>
+        <div style="font-size:13px;color:var(--color-text-primary)">Панель Player 2</div>
+      </div>
+    </div>
+    <div>
+      <div class="type-meta" style="margin-bottom:8px"><div class="role" style="font-size:12px;color:var(--color-text-secondary)">panel-overlay (Victory)</div></div>
+      <div class="panel success" style="width:200px;opacity:0.96">
+        <div class="panel-title">ПОБЕДА</div>
+        <div style="font-size:13px;color:var(--color-text-primary)">Victory Screen</div>
+      </div>
+    </div>
+    <div>
+      <div class="type-meta" style="margin-bottom:8px"><div class="role" style="font-size:12px;color:var(--color-text-secondary)">panel-overlay (Defeat)</div></div>
+      <div class="panel danger" style="width:200px">
+        <div class="panel-title">ПОРАЖЕНИЕ</div>
+        <div style="font-size:13px;color:var(--color-text-primary)">Defeat Screen</div>
+      </div>
+    </div>
+    <div>
+      <div class="type-meta" style="margin-bottom:8px"><div class="role" style="font-size:12px;color:var(--color-text-secondary)">panel-menu</div></div>
+      <div class="panel-menu" style="width:200px">
+        <div class="panel-title">ЛОББИ</div>
+        <div style="font-size:13px;color:var(--color-text-primary)">Menu Panel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="color-section-title" style="margin-top:32px">Button States</div>
+  <div class="comp-row" style="flex-wrap:wrap;gap:16px;align-items:center">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="btn btn-primary">ИГРАТЬ</div>
+      <div style="font-size:11px;color:var(--color-text-disabled)">Normal</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="btn btn-primary-hover">ИГРАТЬ</div>
+      <div style="font-size:11px;color:var(--color-text-disabled)">Hover</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="btn btn-primary-press">ИГРАТЬ</div>
+      <div style="font-size:11px;color:var(--color-text-disabled)">Pressed</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="btn btn-primary-disabled">ИГРАТЬ</div>
+      <div style="font-size:11px;color:var(--color-text-disabled)">Disabled</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="btn btn-danger">ВЫЙТИ</div>
+      <div style="font-size:11px;color:var(--color-text-disabled)">Danger</div>
+    </div>
+  </div>
+
+  <!-- Icons / State indicators -->
+  <div class="color-section-title" style="margin-top:32px">Icon States</div>
+  <div class="comp-row">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="icon icon-ready">⚡</div>
+      <div style="font-size:10px;color:var(--color-state-ready)">Ready</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="icon icon-cooldown">⏳</div>
+      <div style="font-size:10px;color:var(--color-state-cooldown)">Cooldown</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="icon icon-disabled">⊘</div>
+      <div style="font-size:10px;color:var(--color-text-disabled)">Disabled</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="icon icon-success">🚪</div>
+      <div style="font-size:10px;color:var(--color-state-success)">Exit Open</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="icon icon-danger">🔒</div>
+      <div style="font-size:10px;color:var(--color-state-danger)">Exit Blocked</div>
+    </div>
+    <div style="width:1px;height:56px;background:var(--color-ui-border)"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div class="cooldown-ring"><span>3s</span></div>
+      <div style="font-size:10px;color:var(--color-p2-primary)">Radial Fill</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  FRAME 4 — GAME LAYOUT                     -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-label">04 — Game Layout 1920×1080</div>
+<div class="frame-game">
+
+  <!-- HEADER -->
+  <div class="game-header">
+    <div class="score-block score-p1">
+      <span class="player-label">P1 · TETRIS</span>
+      <span class="score-value" style="color:var(--color-text-primary)">48 300</span>
+    </div>
+    <div class="timer-block">
+      <div class="timer-label">TIME</div>
+      <div class="timer-value">02:47</div>
+    </div>
+    <div class="score-block score-p2">
+      <span class="player-label" style="text-align:right">CHARACTER · P2</span>
+      <span class="score-value" style="color:var(--color-text-primary)">3</span>
+    </div>
+  </div>
+
+  <!-- LEFT PANEL (P1 HUD) -->
+  <div class="game-left">
+    <div class="preview-panel">
+      <div class="preview-label">NEXT</div>
+      <div class="preview-grid">
+        <!-- T-piece preview: row 2: _X_, row 3: XXX -->
+        <div class="preview-cell empty"></div><div class="preview-cell filled-T"></div><div class="preview-cell empty"></div><div class="preview-cell empty"></div>
+        <div class="preview-cell filled-T"></div><div class="preview-cell filled-T"></div><div class="preview-cell filled-T"></div><div class="preview-cell empty"></div>
+        <div class="preview-cell empty"></div><div class="preview-cell empty"></div><div class="preview-cell empty"></div><div class="preview-cell empty"></div>
+        <div class="preview-cell empty"></div><div class="preview-cell empty"></div><div class="preview-cell empty"></div><div class="preview-cell empty"></div>
+      </div>
+    </div>
+
+    <div class="bomb-panel">
+      <div class="panel-title">BOMB NPC</div>
+      <div class="bomb-row">
+        <div class="icon icon-ready">💣</div>
+        <div class="bomb-info">
+          <div class="bomb-label">SPAWN</div>
+          <div class="bomb-status">READY</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-panel">
+      <div class="panel-title">СТАТИСТИКА</div>
+      <div class="stat-row"><span class="stat-label">LINES</span><span class="stat-value" style="color:var(--color-p1-primary)">24</span></div>
+      <div class="stat-row"><span class="stat-label">LEVEL</span><span class="stat-value">3</span></div>
+      <div class="stat-row"><span class="stat-label">PIECES</span><span class="stat-value">87</span></div>
+    </div>
+  </div>
+
+  <!-- CENTER (GAME BOARD) -->
+  <div class="game-board">
+    <div class="tetris-board">
+      <!-- Row 1-14: empty -->
+      <!-- Generate 140 empty cells (14 rows × 10 cols) -->
+      <script>
+        // rows 1-14 empty
+        for(let i=0;i<140;i++) document.write('<div class="board-cell"></div>');
+      </script>
+      <!-- Row 15: partial L piece filling -->
+      <div class="board-cell"></div><div class="board-cell"></div>
+      <div class="board-cell block-L"></div>
+      <div class="board-cell"></div><div class="board-cell"></div><div class="board-cell"></div>
+      <div class="board-cell"></div><div class="board-cell"></div><div class="board-cell"></div><div class="board-cell"></div>
+      <!-- Row 16: ghost T -->
+      <div class="board-cell"></div><div class="board-cell"></div>
+      <div class="board-cell ghost"></div>
+      <div class="board-cell ghost"></div>
+      <div class="board-cell ghost"></div>
+      <div class="board-cell"></div><div class="board-cell"></div><div class="board-cell"></div><div class="board-cell"></div><div class="board-cell"></div>
+      <!-- Row 17: filled I line -->
+      <div class="board-cell block-J"></div>
+      <div class="board-cell block-J"></div>
+      <div class="board-cell block-T"></div>
+      <div class="board-cell block-T"></div>
+      <div class="board-cell block-T"></div>
+      <div class="board-cell block-S"></div>
+      <div class="board-cell block-S"></div>
+      <div class="board-cell block-Z"></div>
+      <div class="board-cell block-Z"></div>
+      <div class="board-cell block-L"></div>
+      <!-- Row 18 -->
+      <div class="board-cell block-I"></div>
+      <div class="board-cell block-I"></div>
+      <div class="board-cell block-I"></div>
+      <div class="board-cell block-O"></div>
+      <div class="board-cell block-O"></div>
+      <div class="board-cell block-O"></div>
+      <div class="board-cell block-O"></div>
+      <div class="board-cell block-L"></div>
+      <div class="board-cell block-L"></div>
+      <div class="board-cell block-J"></div>
+      <!-- Row 19 -->
+      <div class="board-cell block-Z"></div>
+      <div class="board-cell block-Z"></div>
+      <div class="board-cell"></div>
+      <div class="board-cell block-S"></div>
+      <div class="board-cell block-S"></div>
+      <div class="board-cell block-T"></div>
+      <div class="board-cell block-T"></div>
+      <div class="board-cell block-T"></div>
+      <div class="board-cell block-J"></div>
+      <div class="board-cell block-J"></div>
+      <!-- Row 20: full line -->
+      <div class="board-cell block-I"></div>
+      <div class="board-cell block-O"></div>
+      <div class="board-cell block-O"></div>
+      <div class="board-cell block-S"></div>
+      <div class="board-cell block-S"></div>
+      <div class="board-cell block-Z"></div>
+      <div class="board-cell block-Z"></div>
+      <div class="board-cell block-L"></div>
+      <div class="board-cell block-J"></div>
+      <div class="board-cell block-I"></div>
+      <!-- Character sprite -->
+      <div class="character-sprite">🧑</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="game-right">
+    <div class="lines-panel">
+      <div class="lines-num">24</div>
+      <div class="lines-lbl">LINES</div>
+    </div>
+
+    <div class="level-panel">
+      <div class="level-num">3</div>
+      <div class="level-lbl">LEVEL</div>
+    </div>
+
+    <div class="controls-panel">
+      <div class="panel-title">CONTROLS</div>
+      <div class="control-hint">
+        <span class="ctrl-desc">Move</span>
+        <span class="ctrl-key">← →</span>
+      </div>
+      <div class="control-hint">
+        <span class="ctrl-desc">Rotate</span>
+        <span class="ctrl-key">↑</span>
+      </div>
+      <div class="control-hint">
+        <span class="ctrl-desc">Soft Drop</span>
+        <span class="ctrl-key">↓</span>
+      </div>
+      <div class="control-hint">
+        <span class="ctrl-desc">Hard Drop</span>
+        <span class="ctrl-key">Space</span>
+      </div>
+      <div class="control-hint">
+        <span class="ctrl-desc">Bomb</span>
+        <span class="ctrl-key">B</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER (P2 HUD) -->
+  <div class="game-footer">
+
+    <!-- Push indicator (left) -->
+    <div class="hud-section">
+      <div class="push-indicator">
+        <div class="hud-label">PUSH</div>
+        <div class="push-icon">↑</div>
+        <div class="push-key">Ins / Kp0</div>
+      </div>
+    </div>
+
+    <!-- Cooldown group (center) -->
+    <div class="hud-section" style="flex:1;justify-content:center">
+      <div class="cooldown-group">
+        <div class="cooldown-item">
+          <div class="hud-label">DESTROY SIDE</div>
+          <div class="cooldown-ring"><span>2s</span></div>
+          <div class="cooldown-name" style="color:var(--color-state-cooldown)">COOLDOWN</div>
+        </div>
+        <div class="cd-divider"></div>
+        <div class="cooldown-item">
+          <div class="hud-label">DESTROY DOWN</div>
+          <div class="cooldown-ring"><span>2s</span></div>
+          <div class="cooldown-name" style="color:var(--color-state-cooldown)">COOLDOWN</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exit status (right) -->
+    <div class="hud-section">
+      <div class="exit-indicator">
+        <div class="hud-label">EXIT</div>
+        <div class="exit-status-dot">
+          <div class="exit-dot"></div>
+          <span class="exit-icon">🚪</span>
+          <span class="exit-text">OPEN</span>
+        </div>
+        <div class="exit-key">E — Enter</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  FRAME 5 — VICTORY OVERLAY                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-label">05 — Victory / Defeat Overlay</div>
+<div class="frame-victory">
+  <div class="victory-card">
+    <div class="victory-title">ПОБЕДА!</div>
+    <div class="victory-sub">Player 2 Wins</div>
+    <div class="victory-detail">Персонаж добрался до выхода.<br>Отличная работа под давлением!</div>
+    <div class="victory-btns">
+      <div class="btn btn-primary">СЫГРАТЬ СНОВА</div>
+      <div class="btn btn-danger">В ГЛАВНОЕ МЕНЮ</div>
+    </div>
+  </div>
+</div>
+
+<!-- P1 win variant -->
+<div class="section-label" style="padding-top:0">  ↳ P1 Win Variant</div>
+<div style="background:rgba(10,10,20,0.95);width:1920px;height:320px;display:flex;align-items:center;justify-content:center;margin-top:2px">
+  <div class="victory-card" style="border-color:var(--color-p1-primary);box-shadow:0 0 60px rgba(74,158,255,0.2)">
+    <div class="victory-title" style="color:var(--color-p1-primary)">ПОБЕДА!</div>
+    <div class="victory-sub">Player 1 Wins</div>
+    <div class="victory-detail">Персонаж погребён под блоками.</div>
+    <div class="victory-btns">
+      <div class="btn btn-primary">СЫГРАТЬ СНОВА</div>
+      <div class="btn btn-danger">В ГЛАВНОЕ МЕНЮ</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  FRAME 6 — MENU SCREEN                     -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-label">06 — Menu Screen</div>
+<div class="frame-menu">
+  <div class="menu-content">
+    <div class="menu-logo">
+      <span class="p1-part">TETRIS</span>
+      <span class="vs-part">VS</span>
+      <span class="p2-part">CHARACTER</span>
+    </div>
+    <div class="menu-subtitle">Асимметричная битва · 2 игрока</div>
+    <div class="menu-divider"></div>
+    <div class="menu-btns">
+      <div class="btn btn-primary" style="width:280px;height:56px;font-size:18px">ИГРАТЬ</div>
+      <div class="btn btn-primary" style="width:280px;height:56px;font-size:18px">ЛОББИ</div>
+      <div class="btn btn-primary" style="width:280px;height:56px;font-size:18px">НАСТРОЙКИ</div>
+    </div>
+    <div class="menu-divider-2"></div>
+    <div class="btn btn-danger" style="width:200px;height:44px;font-size:15px">ВЫЙТИ</div>
+    <div class="menu-version" style="margin-top:32px">v0.3.0 · Unity 2022 · Photon PUN2</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  FRAME 7 — ASSET NAMING                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section-label">07 — Required Assets (64×64 Icons)</div>
+<div class="frame-assets">
+  <div class="asset-grid">
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(128,255,176,0.1);border-color:var(--color-state-ready);color:var(--color-state-ready)">↔</div>
+      <div class="asset-name">ui_icon_destroy_side_ready</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(96,96,170,0.2);border-color:var(--color-state-cooldown);color:var(--color-state-cooldown)">↔</div>
+      <div class="asset-name">ui_icon_destroy_side_cooldown</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(128,255,176,0.1);border-color:var(--color-state-ready);color:var(--color-state-ready)">↓</div>
+      <div class="asset-name">ui_icon_destroy_down_ready</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(96,96,170,0.2);border-color:var(--color-state-cooldown);color:var(--color-state-cooldown)">↓</div>
+      <div class="asset-name">ui_icon_destroy_down_cooldown</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(128,255,176,0.1);border-color:var(--color-state-ready);color:var(--color-state-ready)">↑</div>
+      <div class="asset-name">ui_icon_push_ready</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview">↑</div>
+      <div class="asset-name">ui_icon_push_inactive</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(128,255,176,0.1);border-color:var(--color-state-ready);color:var(--color-state-ready)">💣</div>
+      <div class="asset-name">ui_icon_bomb_idle</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(255,176,32,0.15);border-color:var(--color-state-warning);color:var(--color-state-warning)">💥</div>
+      <div class="asset-name">ui_icon_bomb_active</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(64,208,128,0.12);border-color:var(--color-state-success);color:var(--color-state-success)">🚪</div>
+      <div class="asset-name">ui_icon_exit_open</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+    <div class="asset-card">
+      <div class="asset-preview" style="background:rgba(255,58,58,0.12);border-color:var(--color-state-danger);color:var(--color-state-danger)">🔒</div>
+      <div class="asset-name">ui_icon_exit_blocked</div>
+      <div class="asset-size">64×64 · PNG</div>
+    </div>
+  </div>
+</div>
+
+<div style="height:80px"></div>
+</body>
+</html>

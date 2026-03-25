@@ -35,14 +35,14 @@ public class Tetromino : MonoBehaviour
 
     private static readonly Color[] Colors =
     {
-        Color.cyan,                    // I
-        Color.yellow,                  // O
-        new Color(0.6f, 0f, 1f),       // T — purple
-        Color.green,                   // S
-        Color.red,                     // Z
-        Color.blue,                    // J
-        new Color(1f, 0.5f, 0f),       // L — orange
-        new Color(1f, 0.1f, 0.1f),    // Bomb — ярко-красный
+        new Color(0f,    0.941f, 0.941f), // I — #00F0F0 cyan
+        new Color(0.941f, 0.941f, 0f),    // O — #F0F000 yellow
+        new Color(0.627f, 0f,    0.941f), // T — #A000F0 purple
+        new Color(0f,    0.941f, 0f),     // S — #00F000 green
+        new Color(0.941f, 0f,    0f),     // Z — #F00000 red
+        new Color(0f,    0f,    0.941f),  // J — #0000F0 blue
+        new Color(0.941f, 0.627f, 0f),    // L — #F0A000 orange
+        new Color(1f,    0.1f,  0.1f),   // Bomb — ярко-красный
     };
 
     public static Color GetColor(TetrominoType type) => Colors[(int)type];

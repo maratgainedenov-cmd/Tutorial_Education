@@ -121,14 +121,19 @@ public class Board : MonoBehaviour
         _grid[pos.x, pos.y] = null;
         _grid[target.x, target.y] = block;
 
-        // Анимируем толчок
+        // Отключаем коллайдер на время анимации — иначе он зажимает персонажа
+        var col = block.GetComponent<Collider2D>();
+        if (col != null) col.enabled = false;
+
         block.transform.DOKill();
         block.transform.DOLocalMove(new Vector3(target.x, target.y, 0f), 0.1f)
-            .SetEase(Ease.OutCubic);
-
-        // Проверяем линии сразу после обновления грида, не ждём анимацию
-        ClearLines();
-        ApplyGravity();
+            .SetEase(Ease.OutCubic)
+            .OnComplete(() =>
+            {
+                if (col != null) col.enabled = true;
+                ClearLines();
+                ApplyGravity();
+            });
 
         return true;
     }

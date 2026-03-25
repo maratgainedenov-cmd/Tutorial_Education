@@ -22,8 +22,8 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private void Awake()
     {
-        if (_board   == null) _board   = FindObjectOfType<Board>();
-        if (_spawner == null) _spawner = FindObjectOfType<TetrominoSpawner>();
+        if (_board   == null) Debug.LogError("[TetrisController] Board не назначен в Inspector!", this);
+        if (_spawner == null) Debug.LogError("[TetrisController] TetrominoSpawner не назначен в Inspector!", this);
     }
 
     private void OnEnable()  { _spawner.OnSpawned += OnSpawned; }
@@ -118,9 +118,18 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
         int typeInt = (int)_current.Type;
 
         if (GameManager.LocalDebug)
+        {
             RpcLock(xs, ys, typeInt);
+        }
         else
-            photonView.RPC(nameof(RpcLock), RpcTarget.All, xs, ys, typeInt);
+        {
+            // Отправляем только остальным, мастер выполняет напрямую
+            photonView.RPC(nameof(RpcLock), RpcTarget.Others, xs, ys, typeInt);
+            SetGhostActive(false);
+            _board.Lock(_current.GetPositions(), _current.GetBlocks());
+            Destroy(_current.gameObject);
+            _current = null;
+        }
     }
 
     [PunRPC]
@@ -130,12 +139,10 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
         for (int i = 0; i < xs.Length; i++)
             positions[i] = new Vector2Int(xs[i], ys[i]);
 
-        if (PhotonNetwork.IsMasterClient || GameManager.LocalDebug)
+        if (GameManager.LocalDebug)
         {
             SetGhostActive(false);
-
             _board.Lock(_current.GetPositions(), _current.GetBlocks());
-
             Destroy(_current.gameObject);
             _current = null;
         }
