@@ -24,22 +24,39 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
     {
         if (_board   == null) Debug.LogError("[TetrisController] Board не назначен в Inspector!", this);
         if (_spawner == null) Debug.LogError("[TetrisController] TetrominoSpawner не назначен в Inspector!", this);
+
+        if (photonView != null && !photonView.ObservedComponents.Contains(this))
+            photonView.ObservedComponents.Add(this);
     }
 
-    private void OnEnable()  { _spawner.OnSpawned += OnSpawned; }
-    private void OnDisable() { _spawner.OnSpawned -= OnSpawned; DestroyGhostBlocks(); }
+    private void OnEnable()  { _spawner.OnSpawned += OnSpawned; _spawner.OnNextChanged += SyncNextType; }
+    private void OnDisable() { _spawner.OnSpawned -= OnSpawned; _spawner.OnNextChanged -= SyncNextType; DestroyGhostBlocks(); }
 
     public void StartGame()
     {
-        if (!PhotonNetwork.IsMasterClient && !GameManager.LocalDebug)
-            CreateMirrorBlocks();
-        // Мастер ждёт drag из превью
+        if (!GameManager.LocalDebug)
+            photonView.RPC(nameof(RpcSyncNext), RpcTarget.Others, (int)_spawner.NextType);
     }
+
+    public void InitForViewing()
+    {
+        if (!GameManager.LocalDebug)
+            CreateMirrorBlocks();
+    }
+
+    private void SyncNextType(TetrominoType type)
+    {
+        if (GameManager.LocalDebug || !GameManager.IsTetrisPlayer()) return;
+        photonView.RPC(nameof(RpcSyncNext), RpcTarget.Others, (int)type);
+    }
+
+    [PunRPC]
+    private void RpcSyncNext(int typeInt) => _spawner.SetNextType((TetrominoType)typeInt);
 
     // Вызывается из превью для BombNPC — спаунит живого NPC в колонке
     public void SpawnBombNpcAt(int gridX)
     {
-        if (!PhotonNetwork.IsMasterClient && !GameManager.LocalDebug) return;
+        if (!GameManager.IsTetrisPlayer()) return;
 
         int spawnY = _spawner != null ? _spawner.SpawnPosition.y : _board.Height - 2;
         Vector3 worldPos = _board.transform.TransformPoint(new Vector3(gridX, spawnY, 0f));
@@ -55,7 +72,7 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
     // Вызывается из NextPiecePreview когда бросили на сетку
     public void SpawnAtColumn(int gridX, Vector2Int[] rotatedOffsets = null)
     {
-        if (!PhotonNetwork.IsMasterClient && !GameManager.LocalDebug) return;
+        if (!GameManager.IsTetrisPlayer()) return;
         if (_current != null) return;
 
         _spawner.SpawnNext();
@@ -84,7 +101,7 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private void Update()
     {
-        if (!PhotonNetwork.IsMasterClient && !GameManager.LocalDebug) return;
+        if (!GameManager.IsTetrisPlayer()) return;
         if (_current == null) return;
 
         UpdateGhost();
@@ -98,6 +115,7 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
                 LockCurrent();
                 return;
             }
+            BroadcastPiecePositions();
         }
     }
 
@@ -159,6 +177,29 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
         _current = tetromino;
         _fallAccum = 0f;
         EnsureGhostBlocks();
+        BroadcastPiecePositions();
+    }
+
+    private void BroadcastPiecePositions()
+    {
+        if (GameManager.LocalDebug || _current == null) return;
+        var pos = _current.GetPositions();
+        var xs = new int[4]; var ys = new int[4];
+        for (int i = 0; i < 4; i++) { xs[i] = pos[i].x; ys[i] = pos[i].y; }
+        photonView.RPC(nameof(RpcUpdatePiece), RpcTarget.Others, (int)_current.Type, xs, ys);
+    }
+
+    [PunRPC]
+    private void RpcUpdatePiece(int typeInt, int[] xs, int[] ys)
+    {
+        if (_mirrorBlocks == null) return;
+        Color color = Tetromino.GetColor((TetrominoType)typeInt);
+        for (int i = 0; i < _mirrorBlocks.Length && i < xs.Length; i++)
+        {
+            _mirrorBlocks[i].gameObject.SetActive(true);
+            _mirrorBlocks[i].transform.localPosition = new Vector3(xs[i], ys[i], 0f);
+            _mirrorBlocks[i].SetColor(color);
+        }
     }
 
     // ── Ghost piece ──────────────────────────────────────────────────────

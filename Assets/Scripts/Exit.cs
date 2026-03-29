@@ -22,6 +22,8 @@ public class Exit : MonoBehaviour
     private static readonly Color ColBlocked = new Color(1f,  0.2f, 0.2f, 0.5f);
 
     private Tween _pulseTween;
+    private float _activeTime;
+    private const float ActivationDelay = 1f; // секунда после старта игры
 
     private void Awake()
     {
@@ -68,8 +70,14 @@ public class Exit : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        _activeTime = 0f;
+    }
+
     private void Update()
     {
+        _activeTime += Time.deltaTime;
         if (_board == null) return;
 
         bool blocked = _board.IsOccupied(_gridPos);
@@ -80,6 +88,7 @@ public class Exit : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (_activeTime < ActivationDelay) return;
         if (!other.CompareTag("Player")) return;
 
         // Выход заблокирован тетромино — не работает

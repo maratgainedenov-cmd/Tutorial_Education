@@ -27,8 +27,12 @@ public class NextPiecePreview : MonoBehaviour
         new[] { new Vector2Int(-1, 0), new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(1, 1) }, // L
     };
 
+    [Header("Preview World Position")]
+    [SerializeField] private Transform _previewAnchor; // пустой Transform в мире — центр превью
+
     private Block[]            _ghostBlocks;
     private SpriteRenderer[][] _ghostRenderers;
+    private Block[]            _previewBlocks;         // блоки для статичного превью
     private bool               _isDragging;
     private TetrominoType      _currentType;
     private Vector2Int[]       _currentOffsets;
@@ -39,15 +43,18 @@ public class NextPiecePreview : MonoBehaviour
     private void Start()
     {
         CreateGhostBlocks();
+        CreatePreviewBlocks();
         if (_spawner != null) Show(_spawner.NextType);
     }
 
     private void Update()
     {
+        if (!GameManager.IsTetrisPlayer()) return;
+
         if (!_isDragging && Input.GetMouseButtonDown(0) && IsMouseOverPreviewPanel())
         {
             _isDragging = true;
-            SetUICellsVisible(false);
+            SetPreviewActive(false);
         }
 
         if (!_isDragging) return;
@@ -69,7 +76,6 @@ public class NextPiecePreview : MonoBehaviour
         {
             _isDragging = false;
             SetGhostActive(false);
-            SetUICellsVisible(true);
 
             if (IsMouseOverBoard())
             {
@@ -77,34 +83,67 @@ public class NextPiecePreview : MonoBehaviour
                 _controller?.SpawnAtColumn(gridX, _currentOffsets);
                 Show(_spawner.NextType);
             }
+            else
+            {
+                SetPreviewActive(true);
+            }
         }
     }
 
     public void Show(TetrominoType type)
     {
-        // Bomb убрана из спауна — пропускаем если вдруг пришла
         if ((int)type >= Shapes.Length) return;
 
         _currentType    = type;
         _currentOffsets = (Vector2Int[])Shapes[(int)type].Clone();
 
-        if (_uiCells == null || _uiCells.Length < 4) return;
+        UpdatePreviewBlocks();
+    }
 
-        Color color = Tetromino.GetColor(type);
+    // ── Preview Blocks (статичные — показывают следующую фигуру) ──────────
 
-        // Центрируем форму в панели
+    private void CreatePreviewBlocks()
+    {
+        if (_blockPrefab == null) return;
+        _previewBlocks = new Block[4];
+        for (int i = 0; i < 4; i++)
+        {
+            _previewBlocks[i] = Instantiate(_blockPrefab,
+                _previewAnchor != null ? _previewAnchor : _board.transform);
+            _previewBlocks[i].gameObject.SetActive(false);
+            foreach (var col in _previewBlocks[i].GetComponentsInChildren<Collider2D>())
+                col.enabled = false;
+        }
+    }
+
+    private void UpdatePreviewBlocks()
+    {
+        if (_previewBlocks == null) return;
+
+        Color color = Tetromino.GetColor(_currentType);
+
+        // Центр формы
         Vector2 center = Vector2.zero;
         foreach (var o in _currentOffsets) center += (Vector2)o;
         center /= _currentOffsets.Length;
 
+        Transform anchor = _previewAnchor != null ? _previewAnchor : _board.transform;
+
         for (int i = 0; i < 4; i++)
         {
-            _uiCells[i].color = color;
-            _uiCells[i].rectTransform.anchoredPosition = new Vector2(
-                (_currentOffsets[i].x - center.x) * _cellSize,
-                (_currentOffsets[i].y - center.y) * _cellSize);
-            _uiCells[i].gameObject.SetActive(true);
+            _previewBlocks[i].gameObject.SetActive(true);
+            _previewBlocks[i].transform.position = anchor.position +
+                new Vector3(_currentOffsets[i].x - center.x,
+                            _currentOffsets[i].y - center.y, 0f);
+            _previewBlocks[i].SetColor(color);
         }
+    }
+
+    private void SetPreviewActive(bool active)
+    {
+        if (_previewBlocks == null) return;
+        foreach (var b in _previewBlocks)
+            if (b != null) b.gameObject.SetActive(active);
     }
 
     // ── Ghost ─────────────────────────────────────────────────────────────
@@ -198,10 +237,11 @@ public class NextPiecePreview : MonoBehaviour
 
     private bool IsMouseOverPreviewPanel()
     {
-        if (_uiCells == null || _uiCells.Length == 0 || _uiCells[0] == null) return false;
-        var panel = _uiCells[0].transform.parent?.GetComponent<RectTransform>();
-        if (panel == null) return false;
-        return RectTransformUtility.RectangleContainsScreenPoint(panel, Input.mousePosition);
+        if (_previewAnchor == null || Camera.main == null) return false;
+        // Проверяем зону 3x3 клетки вокруг anchor в мировых координатах
+        Vector3 world = MouseWorldPos();
+        Vector3 local = _previewAnchor.InverseTransformPoint(world);
+        return Mathf.Abs(local.x) < 2f && Mathf.Abs(local.y) < 2f;
     }
 
     private bool IsMouseOverBoard()

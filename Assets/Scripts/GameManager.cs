@@ -1,20 +1,33 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro;
+using Photon.Pun;
+using Photon.Realtime;
+using ExitGames.Client.Photon;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IInRoomCallbacks
 {
     public static GameManager Instance { get; private set; }
 
-    [SerializeField] private GameObject _startPanel;
-    [SerializeField] private VictoryPanel _victoryPanel;
-    [SerializeField] private GameObject _pausePanel;
     [SerializeField] private TetrisController _tetrisController;
     [SerializeField] private CharacterSpawner _characterSpawner;
+
+    [Header("Gameplay Objects")]
+    [SerializeField] private GameObject _grid;
+    [SerializeField] private GameObject _exit;
 
     [Header("Debug")]
     [SerializeField] private bool _localDebugMode;
     public static bool LocalDebug { get; private set; }
+
+    public static bool IsTetrisPlayer()
+    {
+        if (LocalDebug) return true;
+        int actorNum = Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber;
+        string roleKey = RoleSelectPanel.RoomRole + actorNum;
+        Photon.Pun.PhotonNetwork.CurrentRoom.CustomProperties
+            .TryGetValue(roleKey, out object roleObj);
+        return (roleObj as string) == "tetris";
+    }
 
     private bool _isPaused;
     private bool _isPlaying;
@@ -24,10 +37,11 @@ public class GameManager : MonoBehaviour
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         LocalDebug = _localDebugMode;
-        _pausePanel?.SetActive(false);
-        _startPanel?.SetActive(true);
         Time.timeScale = 1f;
     }
+
+    private void OnEnable()  => PhotonNetwork.AddCallbackTarget(this);
+    private void OnDisable() => PhotonNetwork.RemoveCallbackTarget(this);
 
     private void Update()
     {
@@ -35,15 +49,63 @@ public class GameManager : MonoBehaviour
             TogglePause();
     }
 
+    // ── IInRoomCallbacks ─────────────────────────────────────
+    // GameManager сам слушает сигнал старта — не зависит от активной панели
+
+    public void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        if (propertiesThatChanged.ContainsKey(RoleSelectPanel.RoomStarted))
+        {
+            Debug.Log("[GameManager] OnRoomPropertiesUpdate: started signal received");
+            StartGame();
+        }
+    }
+
+    public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps) { }
+    public void OnPlayerEnteredRoom(Player newPlayer) { }
+    public void OnPlayerLeftRoom(Player otherPlayer) { }
+    public void OnMasterClientSwitched(Player newMasterClient) { }
+
+    // ── Game Flow ─────────────────────────────────────────────
+
     public void StartGame()
     {
-        _startPanel?.SetActive(false);
+        if (_isPlaying) return;
         _isPlaying = true;
         Time.timeScale = 1f;
+        _grid?.SetActive(true);
+        _exit?.SetActive(true);
+        UIManager.Instance?.ShowGameHud();
         GameHUD.Instance?.StartTimer();
-        _tetrisController?.StartGame();
-        if (LocalDebug || !Photon.Pun.PhotonNetwork.IsMasterClient)
+
+        if (LocalDebug)
+        {
+            _tetrisController?.StartGame();
             _characterSpawner?.StartGame();
+            return;
+        }
+
+        int actorNum = PhotonNetwork.LocalPlayer.ActorNumber;
+        string roleKey = RoleSelectPanel.RoomRole + actorNum;
+        PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(roleKey, out object roleObj);
+        string role = roleObj as string;
+
+        Debug.Log($"[GameManager] StartGame: actor={actorNum} role={role}");
+
+        if (role == "tetris")
+            _tetrisController?.StartGame();
+        else if (role == "character")
+        {
+            _characterSpawner?.StartGame();
+            _tetrisController?.InitForViewing();
+        }
+        else
+        {
+            bool isMaster = PhotonNetwork.IsMasterClient;
+            Debug.LogWarning($"[GameManager] Role not found, fallback isMaster={isMaster}");
+            if (isMaster) _tetrisController?.StartGame();
+            else _characterSpawner?.StartGame();
+        }
     }
 
     public void GameOver()
@@ -52,7 +114,7 @@ public class GameManager : MonoBehaviour
         _isPlaying = false;
         Time.timeScale = 0f;
         GameHUD.Instance?.StopTimer();
-        _victoryPanel?.ShowP1Wins();
+        UIManager.Instance?.ShowEndGameBlocs();
     }
 
     public void Win()
@@ -61,13 +123,16 @@ public class GameManager : MonoBehaviour
         _isPlaying = false;
         Time.timeScale = 0f;
         GameHUD.Instance?.StopTimer();
-        _victoryPanel?.ShowP2Wins();
+        UIManager.Instance?.ShowEndGameCharacter();
     }
 
     public void TogglePause()
     {
         _isPaused = !_isPaused;
-        _pausePanel?.SetActive(_isPaused);
+        if (_isPaused)
+            UIManager.Instance?.ShowSettings();
+        else
+            UIManager.Instance?.ShowGameHud();
         Time.timeScale = _isPaused ? 0f : 1f;
     }
 
@@ -77,6 +142,6 @@ public class GameManager : MonoBehaviour
         if (LocalDebug)
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         else
-            Photon.Pun.PhotonNetwork.LeaveRoom();
+            PhotonNetwork.LeaveRoom();
     }
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-public class GameHUD : MonoBehaviour
+public class GameHUD : UIPanel
 {
     [Header("Timer")]
     [SerializeField] private TMP_Text _timerText;

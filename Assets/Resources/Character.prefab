@@ -64,7 +64,9 @@ MonoBehaviour:
   _facingLine: {fileID: 3577014203651482945}
   _destroySideKey: 120
   _destroyDownKey: 122
-  _destroyCooldown: 5
+  _destroySideCooldown: 5
+  _destroyDownCooldown: 5
+  _pushCooldown: 1
   _visual: {fileID: 5460621874754936177}
   _animator: {fileID: 2994771586352495431}
 --- !u!50 &9036911940684799374
