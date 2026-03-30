@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Exo 2', sans-serif; background: #0A0A14; color: #E8E8F0; }
+
+  .screen {
+    width: 1920px; height: 1080px;
+    display: flex; align-items: center; justify-content: center;
+    background: #0A0A14;
+    position: relative;
+  }
+
+  /* ── WAITING PANEL ── */
+  .waiting-panel {
+    width: 480px;
+    background: #1A1A2E;
+    border: 1px solid #4A9EFF;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-title {
+    padding: 20px 32px 16px;
+    font-size: 32px; font-weight: 700;
+    color: #4A9EFF; text-align: center; letter-spacing: 2px;
+  }
+  .divider { height: 1px; background: #2A2A4A; margin: 0 24px; }
+  .panel-body { padding: 28px 32px; }
+
+  .room-label { font-size: 18px; color: #8888AA; letter-spacing: 1px; margin-bottom: 4px; }
+  .room-value { font-size: 24px; color: #E8E8F0; font-weight: 600; margin-bottom: 24px; }
+
+  .players-row { display: flex; gap: 24px; justify-content: center; margin-bottom: 24px; }
+  .player-slot { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .player-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+  }
+  .player-circle.filled {
+    background: rgba(74,158,255,0.15);
+    border: 2px solid #4A9EFF;
+    color: #4A9EFF;
+  }
+  .player-circle.empty {
+    background: #12121F;
+    border: 2px dashed #2A2A4A;
+    color: #444460; font-size: 24px;
+  }
+  .player-name { font-size: 18px; color: #8888AA; }
+
+  .waiting-text { text-align: center; color: #8888AA; font-size: 18px; margin-bottom: 28px; }
+
+  .btn-leave {
+    width: 100%; padding: 16px;
+    background: #3A1A1A; border: 1px solid #FF3A3A;
+    color: #FF3A3A; font-size: 24px; font-weight: 700;
+    letter-spacing: 2px; cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+  }
+
+  /* ── ROLE SELECT PANEL ── */
+  .screen-role { background: #0A0A14; }
+
+  .role-panel {
+    width: 680px;
+    background: #1A1A2E;
+    border: 1px solid #2A2A4A;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .role-title {
+    padding: 20px 32px 16px;
+    font-size: 32px; font-weight: 700;
+    color: #E8E8F0; text-align: center; letter-spacing: 2px;
+  }
+
+  .role-cards { display: flex; gap: 16px; padding: 24px 24px 28px; }
+
+  .role-card {
+    flex: 1; border-radius: 8px; padding: 24px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .role-card.tetris { background: #0D1A2E; border: 1px solid #4A9EFF; }
+  .role-card.character { background: #1A0F00; border: 1px solid #FF7A3D; }
+
+  .tetromino {
+    display: grid; grid-template-columns: repeat(3, 20px);
+    grid-template-rows: repeat(2, 20px); gap: 2px;
+  }
+  .t-cell { width: 20px; height: 20px; border-radius: 2px; }
+  .t-cell.on { background: #4A9EFF; }
+  .t-cell.off { background: transparent; }
+
+  .char-icon {
+    width: 48px; height: 60px;
+    background: #FF7A3D;
+    clip-path: polygon(30% 0%, 70% 0%, 70% 30%, 100% 30%, 100% 60%, 70% 60%, 70% 100%, 30% 100%, 30% 60%, 0% 60%, 0% 30%, 30% 30%);
+  }
+
+  .role-name { font-size: 24px; font-weight: 700; letter-spacing: 1px; }
+  .role-name.blue { color: #4A9EFF; }
+  .role-name.orange { color: #FF7A3D; }
+
+  .role-sub { font-size: 18px; color: #8888AA; text-align: center; }
+
+  .btn-choose {
+    width: 100%; padding: 12px;
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 1px; cursor: pointer;
+    border: none; border-radius: 4px;
+    font-family: 'Exo 2', sans-serif;
+  }
+  .btn-choose.blue { background: #4A9EFF; color: #0A0A14; }
+  .btn-choose.orange { background: #FF7A3D; color: #0A0A14; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- SCREEN 1: WAITING PANEL -->
+<div class="screen">
+  <div class="waiting-panel">
+    <div class="panel-title">ОЖИДАНИЕ</div>
+    <div class="divider"></div>
+    <div class="panel-body">
+      <div class="room-label">КОМНАТА</div>
+      <div class="room-value">Тёмная Битва</div>
+      <div class="players-row">
+        <div class="player-slot">
+          <div class="player-circle filled">P1</div>
+          <div class="player-name">Игрок 1</div>
+        </div>
+        <div class="player-slot">
+          <div class="player-circle empty">?</div>
+          <div class="player-name">Ожидание...</div>
+        </div>
+      </div>
+      <div class="waiting-text">Ожидание соперника...</div>
+    </div>
+    <button class="btn-leave">ПОКИНУТЬ</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: ROLE SELECT -->
+<div class="screen screen-role">
+  <div class="role-panel">
+    <div class="role-title">ВЫБЕРИ РОЛЬ</div>
+    <div class="divider"></div>
+    <div class="role-cards">
+      <!-- TETRIS -->
+      <div class="role-card tetris">
+        <div class="tetromino">
+          <div class="t-cell off"></div><div class="t-cell on"></div><div class="t-cell off"></div>
+          <div class="t-cell on"></div><div class="t-cell on"></div><div class="t-cell on"></div>
+        </div>
+        <div class="role-name blue">ТЕТРИС</div>
+        <div class="role-sub">Строй и атакуй</div>
+        <button class="btn-choose blue">ВЫБРАТЬ</button>
+      </div>
+      <!-- CHARACTER -->
+      <div class="role-card character">
+        <div class="char-icon"></div>
+        <div class="role-name orange">ПЕРСОНАЖ</div>
+        <div class="role-sub">Выживи и победи</div>
+        <button class="btn-choose orange">ВЫБРАТЬ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

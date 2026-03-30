@@ -68,7 +68,12 @@ public class Character : MonoBehaviourPun
         CheckCollisions();
         if (!_wasGrounded && _isGrounded)
         {
-            _visual?.DOPunchScale(new Vector3(-0.2f, 0.25f, 0), 0.2f, 5, 0.5f);
+            if (_visual != null)
+            {
+                _visual.DOKill();
+                _visual.localScale = new Vector3(_facingDir, 1f, 1f);
+                _visual.DOPunchScale(new Vector3(-0.2f, 0.25f, 0), 0.2f, 5, 0.5f);
+            }
             _camera?.transform.DOShakePosition(0.1f, 0.15f, 10, 90, false, true);
         }
         _isWallSliding = (_isTouchingLeftWall || _isTouchingRightWall)
@@ -107,9 +112,9 @@ public class Character : MonoBehaviourPun
         _rb.velocity = new Vector2(h * _moveSpeed, _rb.velocity.y);
         if (h != 0)
         {
-            _facingDir = (int)Mathf.Sign(h);
-            if (_visual != null)
-                _visual.localScale = new Vector3(_facingDir, 1f, 1f);
+            int newDir = (int)Mathf.Sign(h);
+            if (newDir != _facingDir)
+                SetFacing(newDir);
         }
         _animator?.SetFloat("Speed", Mathf.Abs(_rb.velocity.x));
         UpdateFacingLine();
@@ -146,13 +151,24 @@ public class Character : MonoBehaviourPun
             {
                 _lastWallJumpDir = -1;
                 Jump(new Vector2(_wallJumpForceX, _wallJumpForceY));
+                SetFacing(1);
             }
             else if (_isTouchingRightWall && _lastWallJumpDir != 1 && _rb.velocity.y <= 0)
             {
                 _lastWallJumpDir = 1;
                 Jump(new Vector2(-_wallJumpForceX, _wallJumpForceY));
+                SetFacing(-1);
             }
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (_visual == null) return;
+        Vector3 s = _visual.localScale;
+        float correctX = _facingDir * Mathf.Abs(s.x);
+        if (!Mathf.Approximately(s.x, correctX))
+            _visual.localScale = new Vector3(correctX, s.y, s.z);
     }
 
     private void UpdateFacingLine()
@@ -242,6 +258,26 @@ public class Character : MonoBehaviourPun
         }
     }
 
+    private void SetFacing(int dir)
+    {
+        _facingDir = dir;
+        if (_visual != null)
+        {
+            _visual.DOKill();
+            _visual.localScale = new Vector3(dir, 1f, 1f);
+        }
+        if (!GameManager.LocalDebug)
+            photonView.RPC(nameof(RpcSyncFacing), RpcTarget.Others, dir);
+    }
+
+    [PunRPC]
+    private void RpcSyncFacing(int dir)
+    {
+        _facingDir = dir;
+        if (_visual != null)
+            _visual.localScale = new Vector3(dir, 1f, 1f);
+    }
+
     [PunRPC]
     private void RpcDestroyBlock(int x, int y)
     {
@@ -261,7 +297,12 @@ public class Character : MonoBehaviourPun
     {
         _rb.velocity = new Vector2(_rb.velocity.x, 0f);
         _rb.AddForce(force, ForceMode2D.Impulse);
-        _visual?.DOPunchScale(new Vector3(-0.15f, 0.3f, 0), 0.25f, 5, 0.5f);
+        if (_visual != null)
+        {
+            _visual.DOKill();
+            _visual.localScale = new Vector3(_facingDir, 1f, 1f);
+            _visual.DOPunchScale(new Vector3(-0.15f, 0.3f, 0), 0.25f, 5, 0.5f);
+        }
     }
 
     public void Die()

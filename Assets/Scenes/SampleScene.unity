@@ -4478,10 +4478,10 @@ RectTransform:
   - {fileID: 190836858}
   m_Father: {fileID: 1546253384}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 260.77002, y: -89.221985}
-  m_SizeDelta: {x: 521.54, y: -178.44}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -517, y: -89.221985}
+  m_SizeDelta: {x: 521.54004, y: 1261.56}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &828785555
 MonoBehaviour:
@@ -6912,7 +6912,7 @@ MonoBehaviour:
   _characterSpawner: {fileID: 2115799308}
   _grid: {fileID: 1597896178}
   _exit: {fileID: 241645952}
-  _localDebugMode: 0
+  _localDebugMode: 1
 --- !u!4 &1094845598
 Transform:
   m_ObjectHideFlags: 0
@@ -7796,7 +7796,7 @@ Transform:
   m_GameObject: {fileID: 1184683546}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -25.09874, y: 9.655462, z: 0}
+  m_LocalPosition: {x: -7.5, y: 9.655462, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10451,7 +10451,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1546253384
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10468,10 +10468,10 @@ RectTransform:
   - {fileID: 828785554}
   m_Father: {fileID: 1566387871}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 2560, y: 1440}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1546253385
 MonoBehaviour:
@@ -10689,7 +10689,7 @@ Canvas:
   m_GameObject: {fileID: 1566387867}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 1
+  m_RenderMode: 0
   m_Camera: {fileID: 519420031}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -10701,7 +10701,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 100
   m_TargetDisplay: 0
 --- !u!224 &1566387871
 RectTransform:
