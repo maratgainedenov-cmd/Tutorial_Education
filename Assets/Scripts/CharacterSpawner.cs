@@ -3,7 +3,8 @@ using Photon.Pun;
 
 public class CharacterSpawner : MonoBehaviour
 {
-    [SerializeField] private string _characterPrefabName = "Character";
+    [SerializeField] private string    _characterPrefabName = "Character";
+    [SerializeField] private Transform _soloSpawnPoint;
 
     private bool _spawned;
 
@@ -11,14 +12,19 @@ public class CharacterSpawner : MonoBehaviour
     {
         if (_spawned) return;
         _spawned = true;
-        if (GameManager.LocalDebug)
+
+        Vector3 spawnPos = (GameManager.SoloMode && _soloSpawnPoint != null)
+            ? _soloSpawnPoint.position
+            : transform.position;
+
+        if (GameManager.LocalDebug || GameManager.SoloMode)
         {
             var prefab = Resources.Load<GameObject>(_characterPrefabName);
-            Instantiate(prefab, transform.position, Quaternion.identity);
+            Instantiate(prefab, spawnPos, Quaternion.identity);
         }
         else
         {
-            PhotonNetwork.Instantiate(_characterPrefabName, transform.position, Quaternion.identity);
+            PhotonNetwork.Instantiate(_characterPrefabName, spawnPos, Quaternion.identity);
         }
     }
 }

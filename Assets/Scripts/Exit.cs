@@ -25,6 +25,13 @@ public class Exit : MonoBehaviour
     private float _activeTime;
     private const float ActivationDelay = 1f; // секунда после старта игры
 
+    public void SetGridPos(Vector2Int pos)
+    {
+        _gridPos = pos;
+        if (_board != null)
+            transform.position = _board.transform.TransformPoint(new Vector3(pos.x, pos.y, 0f));
+    }
+
     private void Awake()
     {
         if (_board == null) _board = FindObjectOfType<Board>();

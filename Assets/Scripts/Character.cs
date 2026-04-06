@@ -64,7 +64,7 @@ public class Character : MonoBehaviourPun
 
     private void Update()
     {
-        if (!photonView.IsMine && !GameManager.LocalDebug) return;
+        if (!photonView.IsMine && !GameManager.LocalDebug && !GameManager.SoloMode) return;
         CheckCollisions();
         if (!_wasGrounded && _isGrounded)
         {
@@ -205,7 +205,7 @@ public class Character : MonoBehaviourPun
             (Vector2)transform.position - (Vector2)_board.transform.position);
         Vector2Int pushPos = myPos + new Vector2Int(_facingDir, 0);
         Vector2Int pushDir = new Vector2Int(_facingDir, 0);
-        if (GameManager.LocalDebug)
+        if (GameManager.LocalDebug || GameManager.SoloMode)
             RpcPushBlock(pushPos.x, pushPos.y, pushDir.x, pushDir.y);
         else
             photonView.RPC(nameof(RpcPushBlock), RpcTarget.All,
@@ -226,7 +226,7 @@ public class Character : MonoBehaviourPun
             Vector2Int target = myPos + dir;
             if (_board.IsInBounds(target) && _board.IsOccupied(target))
             {
-                if (GameManager.LocalDebug)
+                if (GameManager.LocalDebug || GameManager.SoloMode)
                     RpcDestroyBlock(target.x, target.y);
                 else
                     photonView.RPC(nameof(RpcDestroyBlock), RpcTarget.All, target.x, target.y);
@@ -250,7 +250,7 @@ public class Character : MonoBehaviourPun
         Vector2Int target = myPos + Vector2Int.down;
         if (_board.IsInBounds(target) && _board.IsOccupied(target))
         {
-            if (GameManager.LocalDebug)
+            if (GameManager.LocalDebug || GameManager.SoloMode)
                 RpcDestroyBlock(target.x, target.y);
             else
                 photonView.RPC(nameof(RpcDestroyBlock), RpcTarget.All, target.x, target.y);
@@ -266,7 +266,7 @@ public class Character : MonoBehaviourPun
             _visual.DOKill();
             _visual.localScale = new Vector3(dir, 1f, 1f);
         }
-        if (!GameManager.LocalDebug)
+        if (!GameManager.LocalDebug && !GameManager.SoloMode)
             photonView.RPC(nameof(RpcSyncFacing), RpcTarget.Others, dir);
     }
 
@@ -307,7 +307,7 @@ public class Character : MonoBehaviourPun
 
     public void Die()
     {
-        if (GameManager.LocalDebug)
+        if (GameManager.LocalDebug || GameManager.SoloMode)
             RpcDie();
         else
             photonView.RPC(nameof(RpcDie), RpcTarget.All);

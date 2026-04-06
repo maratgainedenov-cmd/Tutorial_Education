@@ -10,6 +10,12 @@ public class Block : MonoBehaviour
         _renderer.color = color;
     }
 
+    private void Start()
+    {
+        if (_killZone == null) return;
+        _killZone.enabled = GetComponentInParent<Tetromino>() != null;
+    }
+
     private void OnTransformParentChanged()
     {
         if (_killZone == null) return;

@@ -199,6 +199,34 @@ public class Board : MonoBehaviour
         ApplyGravity();
     }
 
+    public bool IsRowFull(int row)
+    {
+        for (int x = 0; x < _width; x++)
+            if (_grid[x, row] == null) return false;
+        return true;
+    }
+
+    public void RemoveBlock(Vector2Int pos)
+    {
+        if (pos.x < 0 || pos.x >= _width || pos.y < 0 || pos.y >= _height) return;
+        if (_grid[pos.x, pos.y] == null) return;
+        Destroy(_grid[pos.x, pos.y].gameObject);
+        _grid[pos.x, pos.y] = null;
+    }
+
+    /// <summary>Ставит одиночный блок без очистки линий — только для инициализации поля.</summary>
+    public void PlaceSetupBlock(Vector2Int pos, TetrominoType type)
+    {
+        _grid ??= new Block[_width, _height];
+        if (pos.x < 0 || pos.x >= _width || pos.y < 0 || pos.y >= _height) return;
+        if (_grid[pos.x, pos.y] != null) return;
+
+        Block b = Instantiate(_blockPrefab, transform);
+        b.transform.localPosition = new Vector3(pos.x, pos.y, 0f);
+        b.SetColor(Tetromino.GetColor(type));
+        _grid[pos.x, pos.y] = b;
+    }
+
     public bool DestroyAt(Vector2Int pos)
     {
         if (!IsInBounds(pos) || _grid[pos.x, pos.y] == null) return false;

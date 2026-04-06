@@ -34,7 +34,7 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     public void StartGame()
     {
-        if (!GameManager.LocalDebug)
+        if (!GameManager.LocalDebug && !GameManager.SoloMode)
             photonView.RPC(nameof(RpcSyncNext), RpcTarget.Others, (int)_spawner.NextType);
     }
 
@@ -69,6 +69,18 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
         _spawner.ConsumeNext();
     }
 
+    /// <summary>Вызывается из TetrisAI в Solo режиме.</summary>
+    public void SpawnAtColumnAI(int gridX)
+    {
+        if (!GameManager.SoloMode) return;
+        if (_current != null) return;
+        _spawner.SpawnNext();
+        if (_current == null) return;
+        var pivot = _current.GetPivot();
+        _current.SetPivot(new Vector2Int(gridX, pivot.y));
+        _fallAccum = 0f;
+    }
+
     // Вызывается из NextPiecePreview когда бросили на сетку
     public void SpawnAtColumn(int gridX, Vector2Int[] rotatedOffsets = null)
     {
@@ -101,12 +113,13 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private void Update()
     {
-        if (!GameManager.IsTetrisPlayer()) return;
+        if (!GameManager.IsTetrisPlayer() && !GameManager.SoloMode) return;
         if (_current == null) return;
 
         UpdateGhost();
 
         _fallAccum += _fallSpeed * Time.deltaTime;
+        _fallAccum = Mathf.Min(_fallAccum, 2f); // не более 2 клеток за кадр
         while (_fallAccum >= 1f)
         {
             _fallAccum -= 1f;
@@ -182,7 +195,7 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private void BroadcastPiecePositions()
     {
-        if (GameManager.LocalDebug || _current == null) return;
+        if (GameManager.LocalDebug || GameManager.SoloMode || _current == null) return;
         var pos = _current.GetPositions();
         var xs = new int[4]; var ys = new int[4];
         for (int i = 0; i < 4; i++) { xs[i] = pos[i].x; ys[i] = pos[i].y; }

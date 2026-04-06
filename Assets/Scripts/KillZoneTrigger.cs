@@ -3,6 +3,7 @@ using UnityEngine;
 public class KillZoneTrigger : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D other) => TryKill(other);
+    private void OnTriggerStay2D(Collider2D other)  => TryKill(other);
 
     private void TryKill(Collider2D other)
     {

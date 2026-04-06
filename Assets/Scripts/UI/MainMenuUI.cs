@@ -15,6 +15,7 @@ public class MainMenuUI : UIPanel
 
     [Header("Buttons")]
     [SerializeField] private Button _playButton;
+    [SerializeField] private Button _soloButton;
     [SerializeField] private Button _lobbyButton;
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _quitButton;
@@ -25,6 +26,7 @@ public class MainMenuUI : UIPanel
             _versionText.text = $"v{Application.version}  Unity {Application.unityVersion.Split('.')[0]}.x  Photon PUN2";
 
         _playButton?.onClick.AddListener(OnPlay);
+        _soloButton?.onClick.AddListener(OnSolo);
         _lobbyButton?.onClick.AddListener(OnLobby);
         _settingsButton?.onClick.AddListener(OnSettings);
         _quitButton?.onClick.AddListener(OnQuit);
@@ -43,6 +45,7 @@ public class MainMenuUI : UIPanel
             PhotonNetwork.JoinRandomOrCreateRoom();
     }
 
+    private void OnSolo()     => GameManager.Instance?.StartSolo();
     private void OnLobby()    => UIManager.Instance.ShowLobby();
     private void OnSettings() => UIManager.Instance.ShowSettings();
 

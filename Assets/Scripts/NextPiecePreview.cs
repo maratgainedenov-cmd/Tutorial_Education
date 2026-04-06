@@ -42,6 +42,7 @@ public class NextPiecePreview : MonoBehaviour
 
     private void Start()
     {
+        if (GameManager.SoloMode) { gameObject.SetActive(false); return; }
         CreateGhostBlocks();
         CreatePreviewBlocks();
         if (_spawner != null) Show(_spawner.NextType);

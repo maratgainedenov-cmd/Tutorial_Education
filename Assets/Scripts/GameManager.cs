@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour, IInRoomCallbacks
 
     [SerializeField] private TetrisController _tetrisController;
     [SerializeField] private CharacterSpawner _characterSpawner;
+    [SerializeField] private TetrisAI         _tetrisAI;
+    [SerializeField] private SoloBoardSetup   _soloBoardSetup;
 
     [Header("Gameplay Objects")]
     [SerializeField] private GameObject _grid;
@@ -18,9 +20,11 @@ public class GameManager : MonoBehaviour, IInRoomCallbacks
     [Header("Debug")]
     [SerializeField] private bool _localDebugMode;
     public static bool LocalDebug { get; private set; }
+    public static bool SoloMode   { get; private set; }
 
     public static bool IsTetrisPlayer()
     {
+        if (SoloMode)  return false; // в Solo игрок всегда персонаж
         if (LocalDebug) return true;
         int actorNum = Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber;
         string roleKey = RoleSelectPanel.RoomRole + actorNum;
@@ -67,6 +71,24 @@ public class GameManager : MonoBehaviour, IInRoomCallbacks
     public void OnMasterClientSwitched(Player newMasterClient) { }
 
     // ── Game Flow ─────────────────────────────────────────────
+
+    public void StartSolo()
+    {
+        if (_isPlaying) return;
+        SoloMode   = true;
+        _isPlaying = true;
+        Time.timeScale = 1f;
+        _grid?.SetActive(true);
+        _exit?.SetActive(true);
+        _soloBoardSetup?.gameObject.SetActive(true);
+        _tetrisAI?.gameObject.SetActive(true);
+        UIManager.Instance?.ShowGameHud();
+        GameHUD.Instance?.StartTimer();
+        _soloBoardSetup?.Setup();   // сначала заполняем поле
+        _characterSpawner?.StartGame();
+        _tetrisController?.StartGame();
+        _tetrisAI?.StartAI();
+    }
 
     public void StartGame()
     {
@@ -138,8 +160,9 @@ public class GameManager : MonoBehaviour, IInRoomCallbacks
 
     public void Restart()
     {
+        SoloMode = false;
         Time.timeScale = 1f;
-        if (LocalDebug)
+        if (LocalDebug || SoloMode)
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         else
             PhotonNetwork.LeaveRoom();
