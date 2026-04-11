@@ -42,19 +42,30 @@ public class TetrisAI : MonoBehaviour
     private void PlacePiece()
     {
         if (_controller == null || _board == null) return;
-        int col = PickColumn();
-        _controller.SpawnAtColumnAI(col);
-    }
 
-    private int PickColumn()
-    {
-        if (_target == null)
-            return Random.Range(0, _board.Width);
+        float roll = Random.value;
 
-        // Агрессивно: целимся в колонку персонажа ± 1
-        Vector3 local = _board.transform.InverseTransformPoint(_target.position);
-        int charX  = Mathf.RoundToInt(local.x);
-        int offset = Random.Range(-1, 2); // -1, 0, +1
-        return Mathf.Clamp(charX + offset, 0, _board.Width - 1);
+        // 50% — атака: кидаем рядом с персонажем, но не прямо на него
+        if (roll < 0.50f && _target != null)
+        {
+            Vector3 local = _board.transform.InverseTransformPoint(_target.position);
+            int charX  = Mathf.RoundToInt(local.x);
+            // Смещение ±2..3 — давим, но не всегда в упор
+            int offset = Random.value < 0.5f ? Random.Range(2, 4) : -Random.Range(2, 4);
+            int col    = Mathf.Clamp(charX + offset, 1, _board.Width - 2);
+            _controller.SpawnAtColumnAI(col);
+        }
+        // 30% — случайная колонка в средней зоне
+        else if (roll < 0.80f)
+        {
+            int col = Random.Range(1, _board.Width - 1);
+            _controller.SpawnAtColumnAI(col);
+        }
+        // 20% — край
+        else
+        {
+            int col = Random.value < 0.5f ? 0 : _board.Width - 1;
+            _controller.SpawnAtColumnAI(col);
+        }
     }
 }

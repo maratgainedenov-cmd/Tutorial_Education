@@ -78,6 +78,8 @@ public class GameManager : MonoBehaviour, IInRoomCallbacks
         SoloMode   = true;
         _isPlaying = true;
         Time.timeScale = 1f;
+        _tetrisController?.ResetBoard();
+        _characterSpawner?.Reset();
         _grid?.SetActive(true);
         _exit?.SetActive(true);
         _soloBoardSetup?.gameObject.SetActive(true);
@@ -95,6 +97,8 @@ public class GameManager : MonoBehaviour, IInRoomCallbacks
         if (_isPlaying) return;
         _isPlaying = true;
         Time.timeScale = 1f;
+        _tetrisController?.ResetBoard();
+        _characterSpawner?.Reset();
         _grid?.SetActive(true);
         _exit?.SetActive(true);
         UIManager.Instance?.ShowGameHud();
@@ -160,9 +164,10 @@ public class GameManager : MonoBehaviour, IInRoomCallbacks
 
     public void Restart()
     {
+        bool wasSolo = SoloMode;
         SoloMode = false;
         Time.timeScale = 1f;
-        if (LocalDebug || SoloMode)
+        if (LocalDebug || wasSolo)
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         else
             PhotonNetwork.LeaveRoom();

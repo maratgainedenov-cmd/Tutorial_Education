@@ -6,7 +6,21 @@ public class CharacterSpawner : MonoBehaviour
     [SerializeField] private string    _characterPrefabName = "Character";
     [SerializeField] private Transform _soloSpawnPoint;
 
-    private bool _spawned;
+    private bool      _spawned;
+    private GameObject _spawnedCharacter;
+
+    public void Reset()
+    {
+        if (_spawnedCharacter != null)
+        {
+            if (GameManager.SoloMode || GameManager.LocalDebug)
+                Destroy(_spawnedCharacter);
+            else
+                PhotonNetwork.Destroy(_spawnedCharacter);
+            _spawnedCharacter = null;
+        }
+        _spawned = false;
+    }
 
     public void StartGame()
     {
@@ -20,11 +34,11 @@ public class CharacterSpawner : MonoBehaviour
         if (GameManager.LocalDebug || GameManager.SoloMode)
         {
             var prefab = Resources.Load<GameObject>(_characterPrefabName);
-            Instantiate(prefab, spawnPos, Quaternion.identity);
+            _spawnedCharacter = Instantiate(prefab, spawnPos, Quaternion.identity);
         }
         else
         {
-            PhotonNetwork.Instantiate(_characterPrefabName, spawnPos, Quaternion.identity);
+            _spawnedCharacter = PhotonNetwork.Instantiate(_characterPrefabName, spawnPos, Quaternion.identity);
         }
     }
 }

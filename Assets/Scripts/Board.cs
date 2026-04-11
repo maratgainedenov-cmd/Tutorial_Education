@@ -30,6 +30,8 @@ public class Board : MonoBehaviour
             {
                 _grid[pos.x, pos.y] = blocks[i];
                 blocks[i].transform.SetParent(transform);
+                blocks[i].transform.DOKill();
+                blocks[i].transform.localPosition = new Vector3(pos.x, pos.y, 0f);
             }
         }
 
@@ -248,5 +250,21 @@ public class Board : MonoBehaviour
             if (IsOccupied(pos)) return false;
         }
         return true;
+    }
+
+    /// <summary>Уничтожает все блоки на поле и сбрасывает сетку.</summary>
+    public void ClearBoard()
+    {
+        if (_grid == null) return;
+        for (int x = 0; x < _width; x++)
+        {
+            for (int y = 0; y < _height; y++)
+            {
+                if (_grid[x, y] == null) continue;
+                _grid[x, y].transform.DOKill();
+                Destroy(_grid[x, y].gameObject);
+                _grid[x, y] = null;
+            }
+        }
     }
 }

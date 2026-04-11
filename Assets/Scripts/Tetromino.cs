@@ -1,4 +1,5 @@
 using UnityEngine;
+using DG.Tweening;
 
 public enum TetrominoType { I, O, T, S, Z, J, L, Bomb }
 
@@ -125,6 +126,16 @@ public class Tetromino : MonoBehaviour
         }
 
         RefreshBlockPositions();
+    }
+
+    /// <summary>Обновляет визуальную позицию блоков с дробным смещением по Y для плавного падения.</summary>
+    public void UpdateVisualPositions(float yOffset)
+    {
+        for (int i = 0; i < _blocks.Length; i++)
+        {
+            Vector2Int gridPos = _pivot + _offsets[i];
+            _blocks[i].transform.localPosition = new Vector3(gridPos.x, gridPos.y + yOffset, 0f);
+        }
     }
 
     private void RefreshBlockPositions()

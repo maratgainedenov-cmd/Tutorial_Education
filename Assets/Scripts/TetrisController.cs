@@ -12,6 +12,7 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private Tetromino _current;
     private float _fallAccum;
+    private float _fallSpeedOverride = -1f; // -1 = не активно
 
     // Mirror blocks shown on Player 2's screen
     private Block[] _mirrorBlocks;
@@ -31,6 +32,18 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private void OnEnable()  { _spawner.OnSpawned += OnSpawned; _spawner.OnNextChanged += SyncNextType; }
     private void OnDisable() { _spawner.OnSpawned -= OnSpawned; _spawner.OnNextChanged -= SyncNextType; DestroyGhostBlocks(); }
+
+    public void ResetBoard()
+    {
+        _board?.ClearBoard();
+        DestroyGhostBlocks();
+        if (_current != null)
+        {
+            Destroy(_current.gameObject);
+            _current = null;
+        }
+        _fallAccum = 0f;
+    }
 
     public void StartGame()
     {
@@ -70,15 +83,28 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
     }
 
     /// <summary>Вызывается из TetrisAI в Solo режиме.</summary>
-    public void SpawnAtColumnAI(int gridX)
+    public void SpawnAtColumnAI(int gridX, float fallSpeedMultiplier = 1f)
     {
         if (!GameManager.SoloMode) return;
         if (_current != null) return;
         _spawner.SpawnNext();
         if (_current == null) return;
+
         var pivot = _current.GetPivot();
         _current.SetPivot(new Vector2Int(gridX, pivot.y));
+
+        // Сдвигаем пивот так, чтобы все блоки оказались внутри сетки
+        var positions = _current.GetPositions();
+        int minX = int.MaxValue, maxX = int.MinValue;
+        foreach (var p in positions) { minX = Mathf.Min(minX, p.x); maxX = Mathf.Max(maxX, p.x); }
+
+        int adjustedX = gridX;
+        if (minX < 0)              adjustedX -= minX;                    // выходит влево — двигаем вправо
+        else if (maxX >= _board.Width) adjustedX -= (maxX - _board.Width + 1); // выходит вправо — двигаем влево
+
+        _current.SetPivot(new Vector2Int(adjustedX, pivot.y));
         _fallAccum = 0f;
+        _fallSpeedOverride = fallSpeedMultiplier != 1f ? _fallSpeed * fallSpeedMultiplier : -1f;
     }
 
     // Вызывается из NextPiecePreview когда бросили на сетку
@@ -118,7 +144,8 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
         UpdateGhost();
 
-        _fallAccum += _fallSpeed * Time.deltaTime;
+        float activeFallSpeed = _fallSpeedOverride > 0f ? _fallSpeedOverride : _fallSpeed;
+        _fallAccum += activeFallSpeed * Time.deltaTime;
         _fallAccum = Mathf.Min(_fallAccum, 2f); // не более 2 клеток за кадр
         while (_fallAccum >= 1f)
         {
@@ -130,6 +157,9 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
             }
             BroadcastPiecePositions();
         }
+
+        // Плавное визуальное падение — показываем дробную позицию между клетками
+        _current.UpdateVisualPositions(-_fallAccum);
     }
 
     private bool TryMove(Vector2Int direction)
@@ -142,6 +172,7 @@ public class TetrisController : MonoBehaviourPun, IPunObservable
 
     private void LockCurrent()
     {
+        _fallSpeedOverride = -1f;
         var positions = _current.GetPositions();
         int[] xs = new int[positions.Length];
         int[] ys = new int[positions.Length];
